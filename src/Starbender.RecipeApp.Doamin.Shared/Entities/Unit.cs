@@ -1,4 +1,4 @@
-namespace Starbender.RecipeApp.Domain.Shared.Models;
+namespace Starbender.RecipeApp.Domain.Shared.Entities;
 
 public class Unit
 {

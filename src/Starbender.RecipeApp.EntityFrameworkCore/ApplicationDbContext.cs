@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Starbender.RecipeApp.Domain.Shared.Models;
+using Starbender.RecipeApp.Domain.Shared.Entities;
 
 namespace Starbender.RecipeApp.EntityFrameworkCore;
 

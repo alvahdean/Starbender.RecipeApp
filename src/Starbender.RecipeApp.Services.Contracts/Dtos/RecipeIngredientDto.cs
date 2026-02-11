@@ -1,6 +1,6 @@
-﻿namespace Starbender.RecipeApp.Domain.Shared.Models;
+﻿namespace Starbender.RecipeApp.Services.Contracts.Dtos;
 
-public class RecipeIngredient
+public class RecipeIngredientDto
 {
     /// <summary>
     /// Id of the recipe
@@ -25,15 +25,15 @@ public class RecipeIngredient
     /// <summary>
     /// Nav property to the recipe
     /// </summary>
-    public Recipe Recipe { get; set; } = null!;
+    public RecipeDto Recipe { get; set; } = null!;
 
     /// <summary>
     /// Nav property to the ingredient
     /// </summary>
-    public Ingredient Ingredient { get; set; } = null!;
+    public IngredientDto Ingredient { get; set; } = null!;
 
     /// <summary>
     /// Nav property to the unit
     /// </summary>
-    public Unit? Unit { get; set; }
+    public UnitDto? Unit { get; set; }
 }

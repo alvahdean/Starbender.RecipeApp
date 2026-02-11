@@ -11,6 +11,7 @@ public class RecipeServiceContractsModule : ModuleBase
     {
         // Add service registrations here...
         services.AddModule<RecipeDomainSharedModule>();
+        services.AddAutoMapper(typeof(AutoMapperService));
         return services;
     }
 }

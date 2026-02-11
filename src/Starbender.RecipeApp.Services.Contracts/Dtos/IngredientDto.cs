@@ -1,7 +1,7 @@
-namespace Starbender.RecipeApp.Domain.Shared.Models;
+namespace Starbender.RecipeApp.Services.Contracts.Dtos;
 
 // TODO: Add default units for the ingredient?
-public class Ingredient
+public class IngredientDto
 {
     /// <summary>
     /// The id for the recipe instruction
@@ -16,5 +16,5 @@ public class Ingredient
     /// <summary>
     /// Nav property to all the recipes that contain this ingredient (via mapping table)
     /// </summary>
-    public HashSet<RecipeIngredient> RecipeIngredients { get; set; } = new HashSet<RecipeIngredient>();
+    public HashSet<RecipeIngredientDto> RecipeIngredients { get; set; } = new HashSet<RecipeIngredientDto>();
 }
