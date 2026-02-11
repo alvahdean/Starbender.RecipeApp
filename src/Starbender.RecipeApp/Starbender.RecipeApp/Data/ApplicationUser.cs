@@ -6,5 +6,4 @@ namespace Starbender.RecipeApp.Data
     public class ApplicationUser : IdentityUser
     {
     }
-
 }
