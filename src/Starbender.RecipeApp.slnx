@@ -1,0 +1,16 @@
+<Solution>
+  <Folder Name="/modules/">
+    <Project Path="Starbender.RecipeApp.Core/Starbender.RecipeApp.Core.csproj" />
+    <Project Path="Starbender.RecipeApp.Doamin.Shared/Starbender.RecipeApp.Domain.Shared.csproj" />
+    <Project Path="Starbender.RecipeApp.Domain/Starbender.RecipeApp.Domain.csproj" />
+    <Project Path="Starbender.RecipeApp.EntityFrameworkCore/Starbender.RecipeApp.EntityFrameworkCore.csproj" />
+    <Project Path="Starbender.RecipeApp.Services.Contracts/Starbender.RecipeApp.Services.Contracts.csproj" />
+    <Project Path="Starbender.RecipeApp.Services/Starbender.RecipeApp.Services.csproj" />
+  </Folder>
+  <Folder Name="/_Metadata/">
+    <File Path="../.gitignore" />
+    <File Path="../LICENSE.md" />
+    <File Path="../README.md" />
+  </Folder>
+  <Project Path="Starbender.RecipeApp/Starbender.RecipeApp.csproj" />
+</Solution>

@@ -1,7 +1,0 @@
-<Solution>
-  <Folder Name="/_Metadata/">
-    <File Path="../../.gitignore" />
-    <File Path="../../README.md" />
-  </Folder>
-  <Project Path="Starbender.RecipeApp/Starbender.RecipeApp.csproj" />
-</Solution>
