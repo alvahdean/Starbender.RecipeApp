@@ -1,12 +1,12 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Starbender.Recipe.Domain.Shared.Models;
+using Starbender.RecipeApp.Domain.Shared.Models;
 
 namespace Starbender.RecipeApp.EntityFrameworkCore;
 
 public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : IdentityDbContext<ApplicationUser>(options)
 {
-    public virtual DbSet<RecipeEntry> Recipes { get; set; }
+    public virtual DbSet<Recipe> Recipes { get; set; }
 
     public virtual DbSet<Ingredient> Ingredients { get; set; }
 
@@ -20,7 +20,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     {
         base.OnModelCreating(builder);
 
-        builder.Entity<RecipeEntry>(b =>
+        builder.Entity<Recipe>(b =>
         {
             b.HasKey(p => p.Id);
             b.Property(p => p.Id).ValueGeneratedOnAdd();

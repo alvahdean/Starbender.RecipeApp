@@ -14,7 +14,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <ProjectReference Include="..\Starbender.RecipeApp.Core\Starbender.RecipeApp.Core.csproj" />
 	  <ProjectReference Include="..\Starbender.RecipeApp.Doamin.Shared\Starbender.RecipeApp.Domain.Shared.csproj" />
+	  <ProjectReference Include="..\Starbender.RecipeApp.Domain\Starbender.RecipeApp.Domain.csproj" />
 	</ItemGroup>
 
 </Project>

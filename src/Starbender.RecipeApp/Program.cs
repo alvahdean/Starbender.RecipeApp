@@ -4,7 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using Starbender.RecipeApp.Components;
 using Starbender.RecipeApp.Components.Account;
 using Starbender.RecipeApp.EntityFrameworkCore;
-
+using Starbender.RecipeApp.Core.Extensions;
+using Starbender.RecipeApp.Core;
 namespace Starbender.RecipeApp
 {
     public class Program
@@ -46,6 +47,9 @@ namespace Starbender.RecipeApp
                 .AddDefaultTokenProviders();
 
             builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+
+            // Custom module dependency loader
+            builder.InitializeAppModules();
 
             var app = builder.Build();
 

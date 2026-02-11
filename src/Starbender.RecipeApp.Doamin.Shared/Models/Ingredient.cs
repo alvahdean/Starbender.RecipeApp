@@ -1,4 +1,4 @@
-namespace Starbender.Recipe.Domain.Shared.Models;
+namespace Starbender.RecipeApp.Domain.Shared.Models;
 
 // TODO: Add default units for the ingredient?
 public class Ingredient

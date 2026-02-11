@@ -16,7 +16,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Starbender.Recipe.Core\Starbender.RecipeApp.Core.csproj" />
+    <ProjectReference Include="..\Starbender.RecipeApp.Core\Starbender.RecipeApp.Core.csproj" />
+    <ProjectReference Include="..\Starbender.RecipeApp.Services.Contracts\Starbender.RecipeApp.Services.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

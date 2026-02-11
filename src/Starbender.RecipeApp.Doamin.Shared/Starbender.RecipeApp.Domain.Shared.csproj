@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Starbender.RecipeApp.Core\Starbender.RecipeApp.Core.csproj" />
+  </ItemGroup>
+
 </Project>

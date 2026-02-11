@@ -1,4 +1,4 @@
-namespace Starbender.Recipe.Domain.Shared.Models;
+namespace Starbender.RecipeApp.Domain.Shared.Models;
 
 public class Instruction
 {
@@ -25,5 +25,5 @@ public class Instruction
     /// <summary>
     /// Nav property to the Recipe
     /// </summary>
-    public RecipeEntry Recipe { get; set; } = null!;
+    public Recipe Recipe { get; set; } = null!;
 }

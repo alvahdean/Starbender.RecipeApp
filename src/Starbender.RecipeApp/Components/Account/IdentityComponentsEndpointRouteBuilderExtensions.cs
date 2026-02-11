@@ -11,7 +11,7 @@ using Starbender.RecipeApp.Components.Account.Pages;
 using Starbender.RecipeApp.Components.Account.Pages.Manage;
 using Starbender.RecipeApp.EntityFrameworkCore;
 
-namespace Microsoft.AspNetCore.Routing
+namespace Starbender.RecipeApp.Components.Account
 {
     internal static class IdentityComponentsEndpointRouteBuilderExtensions
     {

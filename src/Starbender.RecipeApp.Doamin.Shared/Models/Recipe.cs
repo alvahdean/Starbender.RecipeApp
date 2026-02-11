@@ -1,6 +1,6 @@
-namespace Starbender.Recipe.Domain.Shared.Models;
+namespace Starbender.RecipeApp.Domain.Shared.Models;
 
-public class RecipeEntry
+public class Recipe
 {
     /// <summary>
     /// The id for the recipe

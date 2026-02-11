@@ -1,4 +1,4 @@
-﻿namespace Starbender.Recipe.Services;
+﻿namespace Starbender.RecipeApp.Services;
 
 public class Class1
 {

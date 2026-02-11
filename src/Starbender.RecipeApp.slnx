@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/modules/">
+    <Project Path="Starbender.RecipeApp.Blazor/Starbender.RecipeApp.Blazor.csproj" />
     <Project Path="Starbender.RecipeApp.Core/Starbender.RecipeApp.Core.csproj" />
     <Project Path="Starbender.RecipeApp.Doamin.Shared/Starbender.RecipeApp.Domain.Shared.csproj" />
     <Project Path="Starbender.RecipeApp.Domain/Starbender.RecipeApp.Domain.csproj" />
