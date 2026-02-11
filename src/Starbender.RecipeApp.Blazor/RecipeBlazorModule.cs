@@ -9,8 +9,11 @@ public class RecipeBlazorModule : ModuleBase
 {
     public override IServiceCollection ConfigureServices(IServiceCollection services)
     {
-        // Add service registrations here...
+        // Add dependent modules here...
         services.AddModule<RecipeServiceContractsModule>();
+
+        // Add service registrations here...
+
         return services;
     }
 }

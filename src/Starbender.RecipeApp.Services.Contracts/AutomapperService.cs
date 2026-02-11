@@ -10,18 +10,21 @@ public class AutoMapperService : Profile
     {
 
         CreateMap<Recipe, RecipeDto>()
-            .ReverseMap();
+            .ReverseMap()
+            .ForMember(t=>t.Id,o=>o.Ignore());
 
         CreateMap<Instruction, InstructionDto>()
-            .ReverseMap();
+            .ReverseMap()
+            .ForMember(t => t.Id, o => o.Ignore());
 
         CreateMap<Unit, UnitDto>()
-            .ReverseMap();
+            .ReverseMap()
+            .ForMember(t => t.Id, o => o.Ignore());
 
         CreateMap<Ingredient, IngredientDto>()
-            .ReverseMap();
+            .ReverseMap()
+            .ForMember(t => t.Id, o => o.Ignore());
 
-        CreateMap<RecipeIngredient, RecipeIngredientDto>()
-            .ReverseMap();
+        CreateMap<RecipeIngredient, RecipeIngredientDto>();
     }
 }

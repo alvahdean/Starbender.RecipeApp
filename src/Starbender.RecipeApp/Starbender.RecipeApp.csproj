@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Starbender.RecipeApp.Blazor\Starbender.RecipeApp.Blazor.csproj" />
     <ProjectReference Include="..\Starbender.RecipeApp.Core\Starbender.RecipeApp.Core.csproj" />
     <ProjectReference Include="..\Starbender.RecipeApp.EntityFrameworkCore\Starbender.RecipeApp.EntityFrameworkCore.csproj" />
     <ProjectReference Include="..\Starbender.RecipeApp.Services.Contracts\Starbender.RecipeApp.Services.Contracts.csproj" />

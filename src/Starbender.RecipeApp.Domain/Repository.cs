@@ -1,23 +1,25 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Starbender.RecipeApp.Core;
 using Starbender.RecipeApp.Domain.Shared;
 using System.Linq.Expressions;
 
 namespace Starbender.RecipeApp.Domain;
 
-public sealed class EfRepository<TEntity> : EfRepository<TEntity,int>, IRepository<TEntity>
-        where TEntity : class
+public class EfRepository<TContext, TEntity> : EfRepository<TContext, TEntity,int>, IRepository<TEntity>
+    where TEntity : class, IHasId<int>
+    where TContext: DbContext
 {
-    public EfRepository(DbContext db) : base(db) { }
+    public EfRepository(TContext db) : base(db) { }
 }
 
-public class EfRepository<TEntity, TKey> : IRepository<TEntity, TKey>
-    where TEntity : class
-    where TKey : notnull
+public class EfRepository<TContext, TEntity, TKey> : IRepository<TEntity, TKey>
+    where TEntity : class, IHasId<TKey>
+    where TContext : DbContext
 {
-    private readonly DbContext _db;
+    private readonly TContext _db;
     private readonly DbSet<TEntity> _set;
 
-    public EfRepository(DbContext db)
+    public EfRepository(TContext db)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
         _set = _db.Set<TEntity>();

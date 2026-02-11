@@ -1,15 +1,15 @@
-﻿using System.Linq.Expressions;
+﻿using Starbender.RecipeApp.Core;
+using System.Linq.Expressions;
 
 namespace Starbender.RecipeApp.Domain.Shared;
 
 public interface IRepository<TEntity> : IRepository<TEntity, int>
-    where TEntity : class
+    where TEntity : class, IHasId<int>
 {
 }
 
 public interface IRepository<TEntity, TKey>
-    where TEntity : class
-    where TKey : notnull
+    where TEntity : class, IHasId<TKey>
 {
     Task<TEntity?> GetAsync(TKey id, CancellationToken ct = default);
 

@@ -1,6 +1,6 @@
 ﻿namespace Starbender.RecipeApp.Services.Contracts.Dtos;
 
-public class RecipeIngredientDto
+public class RecipeIngredientDto 
 {
     /// <summary>
     /// Id of the recipe

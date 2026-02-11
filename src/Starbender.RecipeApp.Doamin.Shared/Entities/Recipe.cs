@@ -1,6 +1,8 @@
+using Starbender.RecipeApp.Core;
+
 namespace Starbender.RecipeApp.Domain.Shared.Entities;
 
-public class Recipe
+public class Recipe : IHasId
 {
     /// <summary>
     /// The id for the recipe

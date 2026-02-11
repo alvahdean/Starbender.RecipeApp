@@ -1,6 +1,8 @@
+using Starbender.RecipeApp.Core;
+
 namespace Starbender.RecipeApp.Services.Contracts.Dtos;
 
-public class InstructionDto
+public class InstructionDto : IHasId
 {
     /// <summary>
     /// The id for the recipe instruction

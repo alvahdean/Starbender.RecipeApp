@@ -3,6 +3,6 @@ using Starbender.RecipeApp.Services.Contracts.Dtos;
 
 namespace Starbender.RecipeApp.Services.Contracts;
 
-public interface IIngredientAppService : ICrudAppService<Ingredient, IngredientDto>
+public interface IIngredientAppService : ICrudAppService<IngredientDto>
 {
 }

@@ -9,8 +9,11 @@ public class RecipeAppModule : ModuleBase
 {
     public override IServiceCollection ConfigureServices(IServiceCollection services)
     {
-        // Add service registrations here...
+        // Add dependent modules here...
         services.AddModule<RecipeServicesModule>();
+
+        // Add local service registrations here...
+
         return services;
     }
 }

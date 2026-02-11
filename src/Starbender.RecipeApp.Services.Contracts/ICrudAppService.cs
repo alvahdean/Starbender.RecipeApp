@@ -1,29 +1,23 @@
-﻿using System.Linq.Expressions;
+﻿using Starbender.RecipeApp.Core;
+using System.Linq.Expressions;
 
 namespace Starbender.RecipeApp.Services.Contracts;
 
-public interface ICrudAppService<TEntity,TDto> : ICrudAppService<TEntity, TDto, int>
-    where TEntity : class
-    where TDto : class
+public interface ICrudAppService<TDto> : ICrudAppService<TDto, int>
+    where TDto : class, IHasId<int>
 {
 }
 
-public interface ICrudAppService<TEntity, TDto, TKey>
-    where TEntity : class
-    where TDto : class
-    where TKey : notnull
+public interface ICrudAppService<TDto, TKey>
+    where TDto : class, IHasId<TKey>
 {
-    Task<TEntity?> GetAsync(TKey id, CancellationToken ct = default);
+    Task<TDto?> GetAsync(TKey id, CancellationToken ct = default);
 
-    Task<IReadOnlyList<TEntity>> GetAllAsync(CancellationToken ct = default);
+    Task<IReadOnlyList<TDto>> GetAllAsync(CancellationToken ct = default);
 
-    Task<IReadOnlyList<TEntity>> QueryAsync(
-        Expression<Func<TEntity, bool>> predicate,
-        CancellationToken ct = default);
+    Task<TDto> CreateAsync(TDto dto, CancellationToken ct = default);
 
-    Task<TEntity> CreateAsync(TEntity entity, CancellationToken ct = default);
-
-    Task<TEntity> UpdateAsync(TEntity entity, CancellationToken ct = default);
+    Task<TDto> UpdateAsync(TDto dto, CancellationToken ct = default);
 
     Task DeleteAsync(TKey id, CancellationToken ct = default);
 

@@ -1,6 +1,8 @@
+using Starbender.RecipeApp.Core;
+
 namespace Starbender.RecipeApp.Domain.Shared.Entities;
 
-public class Unit
+public class Unit : IHasId
 {
     /// <summary>
     /// The id for the unit

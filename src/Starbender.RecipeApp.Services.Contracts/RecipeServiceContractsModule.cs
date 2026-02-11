@@ -9,9 +9,12 @@ public class RecipeServiceContractsModule : ModuleBase
 {
     public override IServiceCollection ConfigureServices(IServiceCollection services)
     {
-        // Add service registrations here...
+        // Add dependent modules here...
         services.AddModule<RecipeDomainSharedModule>();
+
+        // Add service registrations here...
         services.AddAutoMapper(typeof(AutoMapperService));
+
         return services;
     }
 }
