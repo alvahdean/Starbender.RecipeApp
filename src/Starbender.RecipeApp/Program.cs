@@ -1,11 +1,10 @@
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Starbender.Core.Extensions;
 using Starbender.RecipeApp.Components;
 using Starbender.RecipeApp.Components.Account;
 using Starbender.RecipeApp.EntityFrameworkCore;
-using Starbender.RecipeApp.Core.Extensions;
-using Starbender.RecipeApp.Core;
 namespace Starbender.RecipeApp
 {
     public class Program
@@ -29,9 +28,9 @@ namespace Starbender.RecipeApp
                 })
                 .AddIdentityCookies();
 
-            var connectionString = builder.Configuration.GetConnectionString("Default") 
+            var connectionString = builder.Configuration.GetConnectionString("Default")
                 ?? throw new InvalidOperationException("Connection string 'Default' not found.");
-            
+
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(connectionString));
 
@@ -49,7 +48,7 @@ namespace Starbender.RecipeApp
             builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
             // Custom module dependency loader
-            builder.InitializeAppModules();
+            builder.Services.InitializeAppModules();
 
             var app = builder.Build();
 

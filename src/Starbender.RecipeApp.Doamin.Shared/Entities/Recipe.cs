@@ -1,8 +1,9 @@
-using Starbender.RecipeApp.Core;
+using Starbender.BlobStorage.Entities;
+using Starbender.Core;
 
 namespace Starbender.RecipeApp.Domain.Shared.Entities;
 
-public class Recipe : IHasId
+public class Recipe : IEntity<int>
 {
     /// <summary>
     /// The id for the recipe
@@ -20,9 +21,9 @@ public class Recipe : IHasId
     public string Description { get; set; } = null!;
 
     /// <summary>
-    /// The path of image for the recipe (relative to ImageStoreRoot)
+    /// The blob id for the recipe image
     /// </summary>
-    public string? ImagePath { get; set; }
+    public int? ImageMetadataId { get; set; }
 
     /// <summary>
     /// Id of the user who created the recipe
@@ -33,6 +34,8 @@ public class Recipe : IHasId
     /// Indicates if the recipe is publicly viewable
     /// </summary>
     public bool IsPublic { get; set; }
+
+    public BlobMetadata? ImageMetadata { get; set; }
 
     /// <summary>
     /// Instuctions for the recipe

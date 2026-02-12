@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Starbender.RecipeApp.Core;
-using Starbender.RecipeApp.Core.Extensions;
+using Starbender.Core;
+using Starbender.Core.Extensions;
 using Starbender.RecipeApp.Domain.Shared;
 
 namespace Starbender.RecipeApp.Services.Contracts;
@@ -13,7 +13,7 @@ public class RecipeServiceContractsModule : ModuleBase
         services.AddModule<RecipeDomainSharedModule>();
 
         // Add service registrations here...
-        services.AddAutoMapper(typeof(AutoMapperService));
+        services.AddAutoMapper(typeof(RecipeAppServiceContractsMapper));
 
         return services;
     }

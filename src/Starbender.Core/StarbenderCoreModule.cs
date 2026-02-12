@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 
-namespace Starbender.RecipeApp.Core;
+namespace Starbender.Core;
 
-public class RecipeCoreModule : ModuleBase
+public class StarbenderCoreModule : ModuleBase
 {
     public override IServiceCollection ConfigureServices(IServiceCollection services)
     {

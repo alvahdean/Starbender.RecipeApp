@@ -1,0 +1,32 @@
+﻿<button class="btn btn-primary"
+        @onclick="OnClick"
+        disabled="@_isBusy">
+    @_isBusy ? "Seeding..." : "Seed"
+</button>
+
+@code {
+    [Inject] private RecipeSeeder Seeder { get; set; } = default!;
+
+    private bool _isBusy;
+
+    private async Task OnClick()
+    {
+        if (_isBusy)
+            return;
+
+        try
+        {
+            _isBusy = true;
+            await HandleSeedAsync();
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private async Task HandleSeedAsync()
+    {
+        await Seeder.SeedAll();
+    }
+}

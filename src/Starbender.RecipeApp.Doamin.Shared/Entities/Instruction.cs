@@ -1,8 +1,8 @@
-using Starbender.RecipeApp.Core;
+using Starbender.Core;
 
 namespace Starbender.RecipeApp.Domain.Shared.Entities;
 
-public class Instruction : IHasId
+public class Instruction : IEntity<int>
 {
     /// <summary>
     /// The id for the recipe instruction

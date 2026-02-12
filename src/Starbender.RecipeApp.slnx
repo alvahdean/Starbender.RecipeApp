@@ -1,5 +1,6 @@
 <Solution>
-  <Folder Name="/modules/">
+  <Folder Name="/modules/" />
+  <Folder Name="/modules/RecipeApp/">
     <Project Path="Starbender.RecipeApp.Blazor/Starbender.RecipeApp.Blazor.csproj" />
     <Project Path="Starbender.RecipeApp.Core/Starbender.RecipeApp.Core.csproj" />
     <Project Path="Starbender.RecipeApp.Doamin.Shared/Starbender.RecipeApp.Domain.Shared.csproj" />
@@ -7,6 +8,10 @@
     <Project Path="Starbender.RecipeApp.EntityFrameworkCore/Starbender.RecipeApp.EntityFrameworkCore.csproj" />
     <Project Path="Starbender.RecipeApp.Services.Contracts/Starbender.RecipeApp.Services.Contracts.csproj" />
     <Project Path="Starbender.RecipeApp.Services/Starbender.RecipeApp.Services.csproj" />
+  </Folder>
+  <Folder Name="/modules/Starbender/">
+    <Project Path="Starbender.BlobStorage/Starbender.BlobStorage.csproj" Id="7843985f-3126-48f6-923b-c205f95d5195" />
+    <Project Path="Starbender.Core/Starbender.Core.csproj" Id="996f34f0-5690-46e5-8fe2-eba26d369484" />
   </Folder>
   <Folder Name="/_Metadata/">
     <File Path="../.gitignore" />

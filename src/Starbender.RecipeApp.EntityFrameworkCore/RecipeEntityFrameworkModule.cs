@@ -1,8 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Starbender.RecipeApp.Core;
-using Starbender.RecipeApp.Core.Extensions;
+using Starbender.Core;
+using Starbender.Core.Extensions;
 using Starbender.RecipeApp.Domain;
-using Starbender.RecipeApp.Domain.Shared;
 using Starbender.RecipeApp.EntityFrameworkCore.Repositories;
 
 namespace Starbender.RecipeApp.EntityFrameworkCore;

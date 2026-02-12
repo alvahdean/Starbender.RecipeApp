@@ -1,4 +1,4 @@
-﻿using Starbender.RecipeApp.Core;
+﻿using Starbender.Core;
 using System.Linq.Expressions;
 
 namespace Starbender.RecipeApp.Services.Contracts;

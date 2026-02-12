@@ -1,6 +1,4 @@
-﻿using Starbender.RecipeApp.Core;
-using Starbender.RecipeApp.Domain;
-using Starbender.RecipeApp.Domain.Shared;
+﻿using Starbender.Core;
 
 namespace Starbender.RecipeApp.EntityFrameworkCore.Repositories;
 

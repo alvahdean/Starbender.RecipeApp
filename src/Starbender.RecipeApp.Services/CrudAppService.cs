@@ -1,7 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.Extensions.Logging;
-using Starbender.RecipeApp.Core;
-using Starbender.RecipeApp.Domain.Shared;
+using Starbender.Core;
 using Starbender.RecipeApp.Services.Contracts;
 
 namespace Starbender.RecipeApp.Services;

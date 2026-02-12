@@ -1,4 +1,4 @@
-﻿namespace Starbender.RecipeApp.Core;
+﻿namespace Starbender.Core;
 
 public interface IHasId : IHasId<int> { }
 

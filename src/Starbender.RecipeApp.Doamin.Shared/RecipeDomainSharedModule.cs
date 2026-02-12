@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Starbender.RecipeApp.Core;
+using Starbender.Core;
 
 namespace Starbender.RecipeApp.Domain.Shared;
 

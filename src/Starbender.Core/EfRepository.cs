@@ -1,9 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Starbender.RecipeApp.Core;
-using Starbender.RecipeApp.Domain.Shared;
 using System.Linq.Expressions;
 
-namespace Starbender.RecipeApp.Domain;
+namespace Starbender.Core;
 
 public class EfRepository<TContext, TEntity> : EfRepository<TContext, TEntity,int>, IRepository<TEntity>
     where TEntity : class, IHasId<int>
@@ -31,10 +29,9 @@ public class EfRepository<TContext, TEntity, TKey> : IRepository<TEntity, TKey>
     public async Task<IReadOnlyList<TEntity>> GetAllAsync(CancellationToken ct = default)
         => await _set.AsNoTracking().ToListAsync(ct);
 
-    public async Task<IReadOnlyList<TEntity>> QueryAsync(
-        Expression<Func<TEntity, bool>> predicate,
-        CancellationToken ct = default)
-        => await _set.AsNoTracking().Where(predicate).ToListAsync(ct);
+    public IQueryable<TEntity> Query(
+        Expression<Func<TEntity, bool>> predicate)
+        => _set.AsNoTracking().Where(predicate);
 
     public async Task<TEntity> CreateAsync(TEntity entity, CancellationToken ct = default)
     {

@@ -1,9 +1,9 @@
-using Starbender.RecipeApp.Core;
+using Starbender.Core;
 
 namespace Starbender.RecipeApp.Domain.Shared.Entities;
 
 // TODO: Add default units for the ingredient?
-public class Ingredient : IHasId
+public class Ingredient : IEntity<int>
 {
     /// <summary>
     /// The id for the recipe instruction

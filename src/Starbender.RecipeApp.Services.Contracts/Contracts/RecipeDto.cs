@@ -1,8 +1,8 @@
-using Starbender.RecipeApp.Core;
+using Starbender.Core;
 
 namespace Starbender.RecipeApp.Services.Contracts.Dtos;
 
-public class RecipeDto : IHasId
+public class RecipeDto : IDto<int>
 {
     /// <summary>
     /// The id for the recipe
@@ -19,6 +19,7 @@ public class RecipeDto : IHasId
     /// </summary>
     public string Description { get; set; } = null!;
 
+    // TODO: change name of ImagePath to ImageBlobId
     /// <summary>
     /// The path of image for the recipe (relative to ImageStoreRoot)
     /// </summary>

@@ -4,9 +4,9 @@ using Starbender.RecipeApp.Services.Contracts.Dtos;
 
 namespace Starbender.RecipeApp.Services.Contracts;
 
-public class AutoMapperService : Profile
+public class RecipeAppServiceContractsMapper : Profile
 {
-    public AutoMapperService()
+    public RecipeAppServiceContractsMapper()
     {
 
         CreateMap<Recipe, RecipeDto>()

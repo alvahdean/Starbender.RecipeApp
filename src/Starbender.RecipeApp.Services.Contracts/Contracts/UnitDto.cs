@@ -1,8 +1,8 @@
-using Starbender.RecipeApp.Core;
+using Starbender.Core;
 
 namespace Starbender.RecipeApp.Services.Contracts.Dtos;
 
-public class UnitDto : IHasId
+public class UnitDto : IDto<int>
 {
     /// <summary>
     /// The id for the unit
