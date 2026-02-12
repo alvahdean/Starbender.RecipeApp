@@ -1,0 +1,124 @@
+﻿@inherits RecipeComponentBase
+
+<MudPaper Class="pa-4">
+    <MudForm Model="_recipeModel" @ref="_form">
+        <MudText Typo="Typo.h6" Class="mb-4">Recipe</MudText>
+
+        <MudTextField T="string"
+                      Label="Title"
+                      Variant="Variant.Outlined"
+                      Margin="Margin.Dense"
+                      For="@(() => _recipeModel.Title)"
+                      @bind-Value="_recipeModel.Title"
+                      Required="true"
+                      RequiredError="Title is required." />
+
+        <MudTextField T="string"
+                      Label="Description"
+                      Variant="Variant.Outlined"
+                      Margin="Margin.Dense"
+                      For="@(() => _recipeModel.Description)"
+                      @bind-Value="_recipeModel.Description"
+                      Lines="3"
+                      Required="true"
+                      RequiredError="Description is required." />
+
+        <MudTextField T="string"
+                      Label="Instructions"
+                      Variant="Variant.Outlined"
+                      Margin="Margin.Dense"
+                      For="@(() => _recipeModel.Instructions)"
+                      @bind-Value="_recipeModel.Instructions"
+                      Lines="6" />
+
+        <MudStack Row="true" Spacing="2" Class="mt-4">
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="HandleSubmitAsync">
+                Save
+            </MudButton>
+            <MudButton Color="Color.Default" Variant="Variant.Outlined" OnClick="HandleCancelAsync">
+                Cancel
+            </MudButton>
+        </MudStack>
+    </MudForm>
+</MudPaper>
+
+@code {
+
+    [Inject] private IRecipeAppService RecipeService { get; set; } = null!;
+
+    private MudForm? _form;
+    private RecipeDto _recipeModel = new();
+
+    [Parameter]
+    public RecipeDto Model { get; set; } = new();
+
+    [Parameter]
+    public EventCallback<RecipeDto> ModelChanged { get; set; }
+
+    [Parameter]
+    public EventCallback<RecipeDto> OnValidSubmit { get; set; }
+
+    [Parameter]
+    public EventCallback OnCancel { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        _recipeModel = new RecipeDto
+        {
+            Id = Model.Id,
+            Title = Model.Title,
+            Description = Model.Description,
+            ImageBlobId = Model.ImageBlobId,
+            UserId = Model.UserId,
+            IsPublic = Model.IsPublic,
+            Instructions = Model.Instructions,
+            RecipeIngredients = Model.RecipeIngredients
+        };
+    }
+
+    private async Task HandleSubmitAsync()
+    {
+        if (_form is null)
+        {
+            return;
+        }
+
+        await _form.Validate();
+        if (_form.IsValid != true)
+        {
+            return;
+        }
+
+        Model.Id = _recipeModel.Id;
+        Model.Title = _recipeModel.Title;
+        Model.Description = _recipeModel.Description;
+        Model.ImageBlobId = _recipeModel.ImageBlobId;
+        Model.UserId = _recipeModel.UserId;
+        Model.IsPublic = _recipeModel.IsPublic;
+        Model.Instructions = _recipeModel.Instructions;
+        Model.RecipeIngredients = _recipeModel.RecipeIngredients;
+
+        try
+        {
+
+            Model = Model.Id == 0
+                ? await RecipeService.CreateAsync(Model)
+                : await RecipeService.UpdateAsync(Model);
+
+            Snackbar.Add("Saved", Severity.Success);
+
+        } catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+
+        await ModelChanged.InvokeAsync(Model);
+        await OnValidSubmit.InvokeAsync(Model);
+    }
+
+    private Task HandleCancelAsync()
+    {
+        Snackbar.Add("Edit Cancelled", Severity.Warning);
+        return OnCancel.InvokeAsync();
+    }
+}

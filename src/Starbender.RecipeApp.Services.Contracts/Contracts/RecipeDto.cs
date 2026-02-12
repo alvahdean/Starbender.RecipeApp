@@ -43,4 +43,6 @@ public class RecipeDto : IDto<int>
     /// Ingredients for the recipe
     /// </summary>
     public HashSet<RecipeIngredientDto> RecipeIngredients { get; set; } = new HashSet<RecipeIngredientDto>();
+
+    public string IngredientText => string.Join("\n", RecipeIngredients.Select(t => t.ToString()));
 }

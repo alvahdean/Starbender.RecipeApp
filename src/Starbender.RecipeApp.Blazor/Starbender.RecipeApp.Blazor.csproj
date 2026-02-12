@@ -21,4 +21,8 @@
     <ProjectReference Include="..\Starbender.RecipeApp.Services.Contracts\Starbender.RecipeApp.Services.Contracts.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Pages\" />
+  </ItemGroup>
+
 </Project>

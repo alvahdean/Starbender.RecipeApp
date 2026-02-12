@@ -1,25 +1,33 @@
 ﻿
-@inherits ComponentBase
+@inherits RecipeComponentBase
 
+<MudStack Row>
 <h6>Recipes</h6>
-<table class="table">
-    <thead>
-        <tr>
-            <th>Id</th>
-            <th>Name</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in _recipes)
-        {
-            <tr>
-                <td>@item.Id</td>
-                <td>@item.Title</td>
-                <td><RecipeIngredientList Recipe="item" /></td>
+<MudSpacer/>
+<SeedButton />
+<MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/recipes/edit/0">Add Recipe</MudButton>
+</MudStack>
+<MudTextField T="string"
+              Label="Search recipes"
+              Placeholder="Search title or description"
+              Variant="Variant.Outlined"
+              Margin="Margin.Dense"
+              Immediate="true"
+              @bind-Value="_searchTerm" />
+<MudTable Items="FilteredRecipes" Dense="true" Hover="true" Bordered="true" Striped="true">
+    <HeaderContent>
+        <MudTh>Id</MudTh>
+        <MudTh>Title</MudTh>
+        <MudTh>Description</MudTh>
+        <MudTh>Ingredients</MudTh>
+    </HeaderContent>
 
-            </tr>
-        }
-    </tbody>
-</table>
+    <RowTemplate>
+        <MudTd DataLabel="Id">@context.Id</MudTd>
+        <MudTd DataLabel="Title">@context.Title</MudTd>
+        <MudTd DataLabel="Description">@context.Description</MudTd>
+        <MudTd DataLabel="Ingredients">@context.IngredientText</MudTd>
+    </RowTemplate>
+</MudTable>
 
 
