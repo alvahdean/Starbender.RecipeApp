@@ -1,8 +1,11 @@
-﻿<button class="btn btn-primary"
-        @onclick="OnClick"
-        disabled="@_isBusy">
+﻿
+<MudButton 
+    Variant="Variant.Filled" 
+    Color="Color.Primary"
+    OnClick="OnClick"
+    Disabled="@_isBusy">
     @(_isBusy ? "Seeding..." : "Seed")
-</button>
+</MudButton>
 
 @code {
     [Inject] private RecipeSeeder Seeder { get; set; } = default!;
