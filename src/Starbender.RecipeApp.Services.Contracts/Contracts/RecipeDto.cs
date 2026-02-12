@@ -19,11 +19,10 @@ public class RecipeDto : IDto<int>
     /// </summary>
     public string Description { get; set; } = null!;
 
-    // TODO: change name of ImagePath to ImageBlobId
     /// <summary>
-    /// The path of image for the recipe (relative to ImageStoreRoot)
+    /// The blobId for the recipe image
     /// </summary>
-    public string? ImagePath { get; set; }
+    public string? ImageBlobId { get; set; }
 
     /// <summary>
     /// Id of the user who created the recipe
@@ -34,11 +33,11 @@ public class RecipeDto : IDto<int>
     /// Indicates if the recipe is publicly viewable
     /// </summary>
     public bool IsPublic { get; set; }
-
+    
     /// <summary>
-    /// Instuctions for the recipe
+    /// Instructions for how to make the recipe
     /// </summary>
-    public HashSet<InstructionDto> Instructions { get; set; } = new HashSet<InstructionDto>();
+    public string? Instructions { get; set; }
 
     /// <summary>
     /// Ingredients for the recipe

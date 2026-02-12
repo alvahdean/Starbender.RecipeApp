@@ -34,14 +34,13 @@ public class RecipeAppService : CrudAppService<Recipe, RecipeDto>, IRecipeAppSer
         var recipe = await GetAsync(recipeId, ct)
             ?? throw new Exception($"No Recipe with ID={recipeId} found.");
 
-        // TODO: change name of ImagePath to ImageBlobId
-        var blobId = recipe.ImagePath;
+        var blobId = recipe.ImageBlobId;
 
         BlobMetadataDto? blobInfo;
         if (blobId == null)
         {
             blobInfo = await container.CreateContentAsync(imageBytes, ct);
-            recipe.ImagePath = blobInfo.BlobId;
+            recipe.ImageBlobId = blobInfo.BlobId;
             await UpdateAsync(recipe);
         }
         else
@@ -49,7 +48,7 @@ public class RecipeAppService : CrudAppService<Recipe, RecipeDto>, IRecipeAppSer
             blobInfo = await container.UpdateContentAsync(blobId, imageBytes, ct);
             if (blobInfo.BlobId != blobId)
             {
-                recipe.ImagePath = blobInfo.BlobId;
+                recipe.ImageBlobId = blobInfo.BlobId;
                 await UpdateAsync(recipe);
             }
         }
@@ -66,8 +65,10 @@ public class RecipeAppService : CrudAppService<Recipe, RecipeDto>, IRecipeAppSer
             ?? throw new Exception($"No Recipe with ID={recipeId} found.");
 
         
-        var blobId = recipe.ImagePath;
-        var result = await container.GetContentAsync(blobId, ct);
+        var blobId = recipe.ImageBlobId;
+        var result = !string.IsNullOrWhiteSpace(blobId)
+            ? await container.GetContentAsync(blobId, ct)
+            : Array.Empty<byte>();
 
         return result;
     }

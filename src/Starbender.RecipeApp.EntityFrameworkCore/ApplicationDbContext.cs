@@ -31,12 +31,6 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .WithOne(ri => ri.Recipe)
                 .HasForeignKey(ri => ri.RecipeId)
                 .OnDelete(DeleteBehavior.Cascade);
-
-            // 1 image per recipe but images can be reused (e.g. placeholder)
-            b.HasOne(r => r.ImageMetadata)
-                       .WithMany()
-                       .HasForeignKey(r => r.ImageMetadataId)
-                       .OnDelete(DeleteBehavior.SetNull);
         });
 
         builder.Entity<Ingredient>(b =>
