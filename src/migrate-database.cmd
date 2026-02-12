@@ -1,1 +1,1 @@
-dotnet ef database update BlobStorage --project Starbender.RecipeApp.EntityFrameworkCore --startup-project Starbender.RecipeApp --context ApplicationDbContext
+dotnet ef database update --project Starbender.RecipeApp.EntityFrameworkCore --startup-project Starbender.RecipeApp --context ApplicationDbContext

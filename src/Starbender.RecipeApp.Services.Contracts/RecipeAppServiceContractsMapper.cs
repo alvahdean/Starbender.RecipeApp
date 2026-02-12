@@ -13,10 +13,6 @@ public class RecipeAppServiceContractsMapper : Profile
             .ReverseMap()
             .ForMember(t=>t.Id,o=>o.Ignore());
 
-        CreateMap<Instruction, InstructionDto>()
-            .ReverseMap()
-            .ForMember(t => t.Id, o => o.Ignore());
-
         CreateMap<Unit, UnitDto>()
             .ReverseMap()
             .ForMember(t => t.Id, o => o.Ignore());

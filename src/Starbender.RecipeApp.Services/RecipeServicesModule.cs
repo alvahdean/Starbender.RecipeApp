@@ -18,7 +18,6 @@ public class RecipeServicesModule : ModuleBase
 
         // Register local services here...
         services.AddTransient<IRecipeAppService, RecipeAppService>();
-        services.AddTransient<IInstructionAppService, InstructionAppService>();
         services.AddTransient<IIngredientAppService, IngredientAppService>();
         services.AddTransient<IUnitAppService, UnitAppService>();
 

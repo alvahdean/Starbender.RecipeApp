@@ -15,8 +15,6 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 
     public virtual DbSet<RecipeIngredient> RecipeIngredients { get; set; }
 
-    public virtual DbSet<Instruction> Instructions { get; set; }
-
     public virtual DbSet<Unit> Units { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -29,12 +27,6 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             b.Property(p => p.Id).ValueGeneratedOnAdd();
             b.HasIndex(p => p.Title).IsUnique();
 
-            // Explicit relationships (EF should infer these)
-            b.HasMany(r => r.Instructions)
-                .WithOne(r=> r.Recipe)
-                .HasForeignKey(i => i.RecipeId)
-                .OnDelete(DeleteBehavior.Cascade);
-
             b.HasMany(r => r.RecipeIngredients)
                 .WithOne(ri => ri.Recipe)
                 .HasForeignKey(ri => ri.RecipeId)
@@ -45,13 +37,6 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                        .WithMany()
                        .HasForeignKey(r => r.ImageMetadataId)
                        .OnDelete(DeleteBehavior.SetNull);
-        });
-
-        builder.Entity<Instruction>(b =>
-        {
-            b.HasKey(p => p.Id);
-            b.Property(p => p.Id).ValueGeneratedOnAdd();
-            b.HasIndex(p => new { p.Order, p.RecipeId}).IsUnique();
         });
 
         builder.Entity<Ingredient>(b =>

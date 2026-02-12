@@ -35,12 +35,12 @@ public class Recipe : IEntity<int>
     /// </summary>
     public bool IsPublic { get; set; }
 
-    public BlobMetadata? ImageMetadata { get; set; }
-
     /// <summary>
     /// Instuctions for the recipe
     /// </summary>
-    public HashSet<Instruction> Instructions { get; set; } = new HashSet<Instruction>();
+    public string? Instructions { get; set;  }
+
+    public BlobMetadata? ImageMetadata { get; set; }
 
     /// <summary>
     /// Ingredients for the recipe
