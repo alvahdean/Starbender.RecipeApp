@@ -23,7 +23,7 @@ public class Recipe : IEntity<int>
     /// <summary>
     /// The blob id for the recipe image
     /// </summary>
-    public int? ImageMetadataId { get; set; }
+    public int? ImageBlobId { get; set; }
 
     /// <summary>
     /// Id of the user who created the recipe
@@ -39,8 +39,6 @@ public class Recipe : IEntity<int>
     /// Instuctions for the recipe
     /// </summary>
     public string? Instructions { get; set;  }
-
-    public BlobMetadata? ImageMetadata { get; set; }
 
     /// <summary>
     /// Ingredients for the recipe
