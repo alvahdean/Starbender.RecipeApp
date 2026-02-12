@@ -1,4 +1,5 @@
 ﻿using Starbender.Core;
+using System.Text;
 
 namespace Starbender.RecipeApp.Services.Contracts.Dtos;
 
@@ -38,4 +39,9 @@ public class RecipeIngredientDto : IDto
     /// Nav property to the unit
     /// </summary>
     public UnitDto? Unit { get; set; }
+
+    public override string ToString()
+    {
+        return $"{Quantity} {Unit?.Name} {Ingredient?.Name}".Replace("  ", " ").Trim();
+    }
 }

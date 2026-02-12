@@ -4,7 +4,7 @@ using Starbender.RecipeApp.Services.Contracts.Dtos;
 
 namespace Starbender.RecipeApp.Blazor.Components;
 
-public partial class UnitTable : ComponentBase
+public partial class UnitTable : RecipeComponentBase
 {
     [Inject] IUnitAppService UnitService { get; set; } = default!;
 

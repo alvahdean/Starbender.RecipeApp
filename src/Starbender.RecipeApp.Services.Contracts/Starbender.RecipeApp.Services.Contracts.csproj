@@ -15,4 +15,8 @@
     <ProjectReference Include="..\Starbender.RecipeApp.Doamin.Shared\Starbender.RecipeApp.Domain.Shared.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Extensions\" />
+  </ItemGroup>
+
 </Project>

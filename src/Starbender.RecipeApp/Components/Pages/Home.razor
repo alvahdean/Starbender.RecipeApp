@@ -1,7 +1,12 @@
 ﻿@page "/"
+
 @using Starbender.RecipeApp.Blazor.Components
 
 <PageTitle>Home</PageTitle>
-<h6>The UI is being updated, will make new commits shortly</h6>
-
-<SeedButton />
+<MudStack>
+    <MudStack Row>
+            <MudAlert Severity="@Severity.Warning">The UI is being updated, will make new commits shortly</MudAlert>
+            <MudSpacer />
+        <SeedButton />
+    </MudStack>
+</MudStack>
