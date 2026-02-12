@@ -1,4 +1,5 @@
-﻿using Starbender.BlobStorage;
+﻿using MudBlazor.Services;
+using Starbender.BlobStorage;
 using Starbender.Core;
 using Starbender.Core.Extensions;
 using Starbender.RecipeApp.Blazor;
@@ -17,7 +18,13 @@ public class RecipeAppModule : ModuleBase
         services.AddModule<RecipeAppBlazorModule>();
 
         // Add local service registrations here...
+        ConfigureMudBlazor(services);
 
         return services;
+    }
+
+    private void ConfigureMudBlazor(IServiceCollection services)
+    {
+        services.AddMudServices();
     }
 }
