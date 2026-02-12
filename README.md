@@ -20,3 +20,6 @@ Scaffolding should not be used.
    1. Viewing an individual recipe should be done via a Razor Page.
 5. Site should use Bootstrap or some other type of front-end framework.
 6. Queries should use Entity Framework
+
+# Database migration
+There is a script in src/migrate-database.cmd that will correctly run the database update. It will use the values in appsettings.json for the __Default__ connection string.

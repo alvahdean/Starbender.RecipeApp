@@ -5,7 +5,7 @@ using Starbender.RecipeApp.Services.Contracts;
 
 namespace Starbender.RecipeApp.Blazor;
 
-public class RecipeBlazorModule : ModuleBase
+public class RecipeAppBlazorModule : ModuleBase
 {
     public override IServiceCollection ConfigureServices(IServiceCollection services)
     {
@@ -13,7 +13,7 @@ public class RecipeBlazorModule : ModuleBase
         services.AddModule<RecipeServiceContractsModule>();
 
         // Add service registrations here...
-        services.AddSingleton<RecipeSeeder>();
+        services.AddTransient<RecipeSeeder>();
 
         return services;
     }

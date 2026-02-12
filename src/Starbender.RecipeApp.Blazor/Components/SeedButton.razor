@@ -1,7 +1,7 @@
 ﻿<button class="btn btn-primary"
         @onclick="OnClick"
         disabled="@_isBusy">
-    @_isBusy ? "Seeding..." : "Seed"
+    @(_isBusy ? "Seeding..." : "Seed")
 </button>
 
 @code {
@@ -17,16 +17,12 @@
         try
         {
             _isBusy = true;
-            await HandleSeedAsync();
+            await Seeder.SeedAll();
+            StateHasChanged();
         }
         finally
         {
             _isBusy = false;
         }
-    }
-
-    private async Task HandleSeedAsync()
-    {
-        await Seeder.SeedAll();
     }
 }

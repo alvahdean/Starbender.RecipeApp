@@ -10,11 +10,13 @@
         </tr>
     </thead>
     <tbody>
-        @foreach (var item in _units)
+        @foreach (var item in _recipes)
         {
             <tr>
                 <td>@item.Id</td>
-                <td>@item.Name</td>
+                <td>@item.Title</td>
+                <td><RecipeIngredientList Recipe="item" /></td>
+
             </tr>
         }
     </tbody>
