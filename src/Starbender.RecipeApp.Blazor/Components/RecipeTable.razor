@@ -36,12 +36,13 @@
         <MudTd DataLabel="Instructions">@context.Instructions</MudTd>
         <MudTd DataLabel="Ingredients">@context.IngredientText</MudTd>
         <MudTd DataLabel="Actions">
-            <MudIconButton Icon="@Icons.Material.Filled.Delete"
-                           Color="Color.Error"
-                           Size="Size.Small"
-                           OnClick="@(async _ => await DeleteRecipeAsync(context))"
-                           @onclick:stopPropagation="true"
-                           aria-label="Delete recipe" />
+            <span @onclick:stopPropagation="true">
+                <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                               Color="Color.Error"
+                               Size="Size.Small"
+                               OnClick="@(async _ => await DeleteRecipeAsync(context))"
+                               aria-label="Delete recipe" />
+            </span>
         </MudTd>
     </RowTemplate>
 </MudTable>
