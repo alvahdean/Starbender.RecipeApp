@@ -17,23 +17,20 @@
 
     private async Task HandleSavedAsync(RecipeDto recipe)
     {
-        await OnSaved.InvokeAsync(recipe);
-
         try
         {
-
             Model = Model.Id == 0
                 ? await RecipeService.CreateAsync(Model)
                 : await RecipeService.UpdateAsync(Model);
 
+            await OnSaved.InvokeAsync(Model);
             Snackbar.Add("Saved", Severity.Success);
-
-        } catch (Exception ex)
+            MudDialog.Close(DialogResult.Ok(Model));
+        }
+        catch (Exception ex)
         {
             Snackbar.Add(ex.Message, Severity.Error);
         }
-
-        MudDialog.Close(DialogResult.Ok(recipe));
     }
 
     private Task HandleCancelAsync()

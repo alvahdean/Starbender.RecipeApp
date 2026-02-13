@@ -2,43 +2,48 @@
 
 <MudPaper Class="pa-4">
     <MudForm Model="_recipeModel" @ref="_form">
-        <MudText Typo="Typo.h6" Class="mb-4">Recipe</MudText>
+        <MudStack>
+            <MudStack Row>
+            <RecipeImage IsEditable="true" Width="150" Height="150" RecipeId="@_recipeModel.Id" />
+                <MudStack>
+                    <MudTextField T="string"
+                          Label="Title"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
+                          For="@(() => _recipeModel.Title)"
+                          @bind-Value="_recipeModel.Title"
+                          Required="true"
+                          RequiredError="Title is required." />
 
-        <RecipeImage IsEditable="true" Width="150" Height="150" RecipeId="@_recipeModel.Id" />
-        <MudTextField T="string"
-                      Label="Title"
-                      Variant="Variant.Outlined"
-                      Margin="Margin.Dense"
-                      For="@(() => _recipeModel.Title)"
-                      @bind-Value="_recipeModel.Title"
-                      Required="true"
-                      RequiredError="Title is required." />
+                <MudTextField T="string"
+                              Label="Description"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              For="@(() => _recipeModel.Description)"
+                              @bind-Value="_recipeModel.Description"
+                              Lines="3"
+                              Required="true"
+                              RequiredError="Description is required." />
+                </MudStack>
+            </MudStack>
+            <MudTextField T="string"
+                          Label="Instructions"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
+                          For="@(() => _recipeModel.Instructions)"
+                          @bind-Value="_recipeModel.Instructions"
+                          Lines="6" />
 
-        <MudTextField T="string"
-                      Label="Description"
-                      Variant="Variant.Outlined"
-                      Margin="Margin.Dense"
-                      For="@(() => _recipeModel.Description)"
-                      @bind-Value="_recipeModel.Description"
-                      Lines="3"
-                      Required="true"
-                      RequiredError="Description is required." />
+            <RecipeIngredients Recipe="_recipeModel" RecipeChanged="HandleIngredientsChangedAsync" IsEditable="true" />
 
-        <MudTextField T="string"
-                      Label="Instructions"
-                      Variant="Variant.Outlined"
-                      Margin="Margin.Dense"
-                      For="@(() => _recipeModel.Instructions)"
-                      @bind-Value="_recipeModel.Instructions"
-                      Lines="6" />
-
-        <MudStack Row="true" Spacing="2" Class="mt-4">
-            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="HandleSubmitAsync">
-                Save
-            </MudButton>
-            <MudButton Color="Color.Default" Variant="Variant.Outlined" OnClick="OnCancel">
-                Cancel
-            </MudButton>
+            <MudStack Row="true" Spacing="2" Class="mt-4">
+                <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="HandleSubmitAsync">
+                    Save
+                </MudButton>
+                <MudButton Color="Color.Default" Variant="Variant.Outlined" OnClick="OnCancel">
+                    Cancel
+                </MudButton>
+            </MudStack>
         </MudStack>
     </MudForm>
 </MudPaper>
@@ -97,5 +102,11 @@
 
         await ModelChanged.InvokeAsync(Model);
         await OnValidSubmit.InvokeAsync(Model);
+    }
+
+    private Task HandleIngredientsChangedAsync(RecipeDto recipe)
+    {
+        _recipeModel.RecipeIngredients = recipe.RecipeIngredients;
+        return Task.CompletedTask;
     }
 }
