@@ -119,22 +119,19 @@ public class FilesystemContainerProvider : IBlobContainer
 
         var path = Path.Combine(_options.Parameters[RootPathKey], blobId);
 
-        var metadata = await Metadata().FirstOrDefaultAsync(t=>t.BlobId==blobId);
+        var blobPk = (await Metadata().FirstOrDefaultAsync(t => t.BlobId == blobId, ct))?.Id ?? 0;
 
-        // Delete content regardless of if it's registered
-        await DeleteContentAsync(blobId, ct);
-
-        if (metadata == null)
-        {
-            throw new Exception($"Blob '{blobId}' not found");
-        }
+        // Resolve to the tracked instance if one already exists in the DbContext.
+        var metadata = await _metadataRepo.GetAsync(blobPk, ct)
+            ?? throw new Exception($"Blob '{blobId}' not found");
 
         metadata.Size = (ulong)data.Length;
-        metadata.Checksum= 0; // TODO: add checksum
+        metadata.Checksum = 0; // TODO: add checksum
 
-        var file = File.Create(path);
-        await file.WriteAsync(data, ct);
-        file.Close();
+        await using (var file = File.Create(path))
+        {
+            await file.WriteAsync(data, ct);
+        }
 
         metadata = await _metadataRepo.UpdateAsync(metadata, ct);
         var result = _mapper.Map<BlobMetadataDto>(metadata);
