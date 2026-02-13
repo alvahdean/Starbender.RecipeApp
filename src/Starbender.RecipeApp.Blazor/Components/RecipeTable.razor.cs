@@ -58,4 +58,30 @@ public partial class RecipeTable : RecipeComponentBase
         _recipes = (await RecipeService.GetAllAsync()).ToList();
         StateHasChanged();
     }
+
+    private async Task DeleteRecipeAsync(RecipeDto recipe)
+    {
+        var confirmed = await DialogService.ShowMessageBox(
+            "Delete Recipe",
+            $"Delete '{recipe.Title}'?",
+            yesText: "Delete",
+            cancelText: "Cancel");
+
+        if (confirmed != true)
+        {
+            return;
+        }
+
+        try
+        {
+            await RecipeService.DeleteAsync(recipe.Id);
+            _recipes.RemoveAll(x => x.Id == recipe.Id);
+            Snackbar.Add("Recipe deleted.", Severity.Success);
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Delete failed: {ex.Message}", Severity.Error);
+        }
+    }
 }

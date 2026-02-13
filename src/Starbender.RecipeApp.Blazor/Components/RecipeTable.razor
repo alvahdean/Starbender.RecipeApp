@@ -27,6 +27,7 @@
         <MudTh>Description</MudTh>
         <MudTh>Instructions</MudTh>
         <MudTh>Ingredients</MudTh>
+        <MudTh>Actions</MudTh>
     </HeaderContent>
 
     <RowTemplate>
@@ -34,6 +35,14 @@
         <MudTd DataLabel="Description">@context.Description</MudTd>
         <MudTd DataLabel="Instructions">@context.Instructions</MudTd>
         <MudTd DataLabel="Ingredients">@context.IngredientText</MudTd>
+        <MudTd DataLabel="Actions">
+            <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                           Color="Color.Error"
+                           Size="Size.Small"
+                           OnClick="@(async _ => await DeleteRecipeAsync(context))"
+                           @onclick:stopPropagation="true"
+                           aria-label="Delete recipe" />
+        </MudTd>
     </RowTemplate>
 </MudTable>
 
