@@ -33,10 +33,9 @@ public class RecipeAppService : CrudAppService<Recipe, RecipeDto>, IRecipeAppSer
         var container = _containerFactory.GetContainer(_options.ImageStoreType, _options.ImageContainerId)
             ?? throw new Exception($"No Recipe Image container found. ({_options.ImageStoreType}.{_options.ImageContainerId})");
 
-        var recipe = await GetAsync(recipeId, ct)
-            ?? throw new Exception($"No Recipe with ID={recipeId} found.");
+        var recipe = await GetAsync(recipeId, ct);
 
-        var blobId = recipe.ImageBlobId;
+        var blobId = recipe?.ImageBlobId;
 
         BlobMetadataDto? blobInfo;
         if (blobId == null)
@@ -47,8 +46,11 @@ public class RecipeAppService : CrudAppService<Recipe, RecipeDto>, IRecipeAppSer
                 ContentType="image/png"
             }, ct);
 
-            recipe.ImageBlobId = blobInfo.BlobId;
-            await UpdateAsync(recipe);
+            if (recipe != null)
+            {
+                recipe.ImageBlobId = blobInfo.BlobId;
+                await UpdateAsync(recipe);
+            }
         }
         else
         {

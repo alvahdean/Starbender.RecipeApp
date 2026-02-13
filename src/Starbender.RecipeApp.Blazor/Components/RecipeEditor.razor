@@ -4,7 +4,11 @@
     <MudForm Model="_recipeModel" @ref="_form">
         <MudStack>
             <MudStack Row>
-            <RecipeImage IsEditable="true" Width="150" Height="150" RecipeId="@_recipeModel.Id" />
+            <RecipeImage IsEditable="true"
+                         Width="150"
+                         Height="150"
+                         RecipeId="@_recipeModel.Id"
+                         BlobIdChanged="HandleBlobIdChangedAsync" />
                 <MudStack>
                     <MudTextField T="string"
                           Label="Title"
@@ -107,6 +111,12 @@
     private Task HandleIngredientsChangedAsync(RecipeDto recipe)
     {
         _recipeModel.RecipeIngredients = recipe.RecipeIngredients;
+        return Task.CompletedTask;
+    }
+
+    private Task HandleBlobIdChangedAsync(string blobId)
+    {
+        _recipeModel.ImageBlobId = blobId;
         return Task.CompletedTask;
     }
 }

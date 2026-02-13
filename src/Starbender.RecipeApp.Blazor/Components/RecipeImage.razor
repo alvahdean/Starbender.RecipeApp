@@ -58,6 +58,7 @@
         {
             _isBusy = true;
             var dto = await RecipeService.GetRecipeImageAsync(RecipeId, CancellationToken.None);
+
             if (dto?.Size > 0)
             {
                 _imageDataUrl = $"data:{dto.ContentType};base64,{Convert.ToBase64String(dto.Content)}";
@@ -107,6 +108,11 @@
 
             result = await RecipeService.SetRecipeImage(RecipeId, originalBytes, CancellationToken.None);
             _imageDataUrl = $"data:{file.ContentType};base64,{Convert.ToBase64String(originalBytes)}";
+            
+            if (!string.IsNullOrWhiteSpace(result.BlobId))
+            {
+                await BlobIdChanged.InvokeAsync(result.BlobId);
+            }
         }
         finally
         {

@@ -31,8 +31,10 @@ namespace Starbender.RecipeApp
             var connectionString = builder.Configuration.GetConnectionString("Default")
                 ?? throw new InvalidOperationException("Connection string 'Default' not found.");
 
-            builder.Services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlServer(connectionString));
+            builder.Services.AddDbContext<ApplicationDbContext>(
+                options => options.UseSqlServer(connectionString),
+                contextLifetime: ServiceLifetime.Transient,
+                optionsLifetime: ServiceLifetime.Scoped);
 
             builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 

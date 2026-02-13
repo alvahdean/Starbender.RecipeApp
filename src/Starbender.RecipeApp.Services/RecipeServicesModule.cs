@@ -1,9 +1,10 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using Starbender.Core;
 using Starbender.Core.Extensions;
 using Starbender.RecipeApp.Domain;
 using Starbender.RecipeApp.EntityFrameworkCore;
 using Starbender.RecipeApp.Services.Contracts;
+using Starbender.RecipeApp.Services.Contracts.Options;
 
 namespace Starbender.RecipeApp.Services;
 
@@ -20,6 +21,9 @@ public class RecipeServicesModule : ModuleBase
         services.AddTransient<IRecipeAppService, RecipeAppService>();
         services.AddTransient<IIngredientAppService, IngredientAppService>();
         services.AddTransient<IUnitAppService, UnitAppService>();
+        services.AddOptions<RecipeAppOptions>()
+            .BindConfiguration(RecipeAppOptions.ConfigurationKey)
+            .ValidateOnStart();
 
         return services;
     }
