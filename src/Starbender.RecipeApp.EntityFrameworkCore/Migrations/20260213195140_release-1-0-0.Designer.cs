@@ -12,8 +12,8 @@ using Starbender.RecipeApp.EntityFrameworkCore;
 namespace Starbender.RecipeApp.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260212191524_SimpleInstructions")]
-    partial class SimpleInstructions
+    [Migration("20260213195140_release-1-0-0")]
+    partial class release100
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -177,6 +177,9 @@ namespace Starbender.RecipeApp.EntityFrameworkCore.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<string>("ContentType")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<decimal>("Size")
                         .HasColumnType("decimal(20,0)");
 
@@ -223,8 +226,8 @@ namespace Starbender.RecipeApp.EntityFrameworkCore.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("ImageMetadataId")
-                        .HasColumnType("int");
+                    b.Property<string>("ImageBlobId")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Instructions")
                         .HasColumnType("nvarchar(max)");
@@ -240,8 +243,6 @@ namespace Starbender.RecipeApp.EntityFrameworkCore.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ImageMetadataId");
 
                     b.HasIndex("Title")
                         .IsUnique();
@@ -408,25 +409,15 @@ namespace Starbender.RecipeApp.EntityFrameworkCore.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Starbender.RecipeApp.Domain.Shared.Entities.Recipe", b =>
-                {
-                    b.HasOne("Starbender.BlobStorage.Entities.BlobMetadata", "ImageMetadata")
-                        .WithMany()
-                        .HasForeignKey("ImageMetadataId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("ImageMetadata");
-                });
-
             modelBuilder.Entity("Starbender.RecipeApp.Domain.Shared.Entities.RecipeIngredient", b =>
                 {
                     b.HasOne("Starbender.RecipeApp.Domain.Shared.Entities.Ingredient", "Ingredient")
-                        .WithMany("RecipeIngredients")
+                        .WithMany()
                         .HasForeignKey("IngredientId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Starbender.RecipeApp.Domain.Shared.Entities.Recipe", "Recipe")
+                    b.HasOne("Starbender.RecipeApp.Domain.Shared.Entities.Recipe", null)
                         .WithMany("RecipeIngredients")
                         .HasForeignKey("RecipeId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -439,14 +430,7 @@ namespace Starbender.RecipeApp.EntityFrameworkCore.Migrations
 
                     b.Navigation("Ingredient");
 
-                    b.Navigation("Recipe");
-
                     b.Navigation("Unit");
-                });
-
-            modelBuilder.Entity("Starbender.RecipeApp.Domain.Shared.Entities.Ingredient", b =>
-                {
-                    b.Navigation("RecipeIngredients");
                 });
 
             modelBuilder.Entity("Starbender.RecipeApp.Domain.Shared.Entities.Recipe", b =>
