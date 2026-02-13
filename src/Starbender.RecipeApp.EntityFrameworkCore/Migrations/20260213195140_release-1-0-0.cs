@@ -1,11 +1,12 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace Starbender.RecipeApp.EntityFrameworkCore.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialRecipeDb : Migration
+    public partial class release100 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -37,7 +38,7 @@ namespace Starbender.RecipeApp.EntityFrameworkCore.Migrations
                     PasswordHash = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     SecurityStamp = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ConcurrencyStamp = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    PhoneNumber = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    PhoneNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     PhoneNumberConfirmed = table.Column<bool>(type: "bit", nullable: false),
                     TwoFactorEnabled = table.Column<bool>(type: "bit", nullable: false),
                     LockoutEnd = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
@@ -47,6 +48,24 @@ namespace Starbender.RecipeApp.EntityFrameworkCore.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AspNetUsers", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "BlobMetadata",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    StoreType = table.Column<int>(type: "int", nullable: false),
+                    ContainerId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    BlobId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Size = table.Column<decimal>(type: "decimal(20,0)", nullable: false),
+                    Checksum = table.Column<long>(type: "bigint", nullable: false),
+                    ContentType = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_BlobMetadata", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -70,9 +89,10 @@ namespace Starbender.RecipeApp.EntityFrameworkCore.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Title = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    ImagePath = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ImageBlobId = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     UserId = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    IsPublic = table.Column<bool>(type: "bit", nullable: false)
+                    IsPublic = table.Column<bool>(type: "bit", nullable: false),
+                    Instructions = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -138,8 +158,8 @@ namespace Starbender.RecipeApp.EntityFrameworkCore.Migrations
                 name: "AspNetUserLogins",
                 columns: table => new
                 {
-                    LoginProvider = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
-                    ProviderKey = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
+                    LoginProvider = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    ProviderKey = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     ProviderDisplayName = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     UserId = table.Column<string>(type: "nvarchar(450)", nullable: false)
                 },
@@ -148,25 +168,6 @@ namespace Starbender.RecipeApp.EntityFrameworkCore.Migrations
                     table.PrimaryKey("PK_AspNetUserLogins", x => new { x.LoginProvider, x.ProviderKey });
                     table.ForeignKey(
                         name: "FK_AspNetUserLogins_AspNetUsers_UserId",
-                        column: x => x.UserId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "AspNetUserPasskeys",
-                columns: table => new
-                {
-                    CredentialId = table.Column<byte[]>(type: "varbinary(1024)", maxLength: 1024, nullable: false),
-                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Data = table.Column<string>(type: "nvarchar(max)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_AspNetUserPasskeys", x => x.CredentialId);
-                    table.ForeignKey(
-                        name: "FK_AspNetUserPasskeys_AspNetUsers_UserId",
                         column: x => x.UserId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
@@ -202,8 +203,8 @@ namespace Starbender.RecipeApp.EntityFrameworkCore.Migrations
                 columns: table => new
                 {
                     UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    LoginProvider = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
+                    LoginProvider = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     Value = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
@@ -213,27 +214,6 @@ namespace Starbender.RecipeApp.EntityFrameworkCore.Migrations
                         name: "FK_AspNetUserTokens_AspNetUsers_UserId",
                         column: x => x.UserId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Instructions",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    RecipeId = table.Column<int>(type: "int", nullable: false),
-                    Text = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Order = table.Column<int>(type: "int", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Instructions", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Instructions_Recipes_RecipeId",
-                        column: x => x.RecipeId,
-                        principalTable: "Recipes",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -255,7 +235,7 @@ namespace Starbender.RecipeApp.EntityFrameworkCore.Migrations
                         column: x => x.IngredientId,
                         principalTable: "Ingredients",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_RecipeIngredients_Recipes_RecipeId",
                         column: x => x.RecipeId,
@@ -293,11 +273,6 @@ namespace Starbender.RecipeApp.EntityFrameworkCore.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_AspNetUserPasskeys_UserId",
-                table: "AspNetUserPasskeys",
-                column: "UserId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_AspNetUserRoles_RoleId",
                 table: "AspNetUserRoles",
                 column: "RoleId");
@@ -315,21 +290,16 @@ namespace Starbender.RecipeApp.EntityFrameworkCore.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
+                name: "IX_BlobMetadata_StoreType_ContainerId_BlobId",
+                table: "BlobMetadata",
+                columns: new[] { "StoreType", "ContainerId", "BlobId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Ingredients_Name",
                 table: "Ingredients",
                 column: "Name",
                 unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Instructions_Order_RecipeId",
-                table: "Instructions",
-                columns: new[] { "Order", "RecipeId" },
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Instructions_RecipeId",
-                table: "Instructions",
-                column: "RecipeId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_RecipeIngredients_IngredientId",
@@ -367,16 +337,13 @@ namespace Starbender.RecipeApp.EntityFrameworkCore.Migrations
                 name: "AspNetUserLogins");
 
             migrationBuilder.DropTable(
-                name: "AspNetUserPasskeys");
-
-            migrationBuilder.DropTable(
                 name: "AspNetUserRoles");
 
             migrationBuilder.DropTable(
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
-                name: "Instructions");
+                name: "BlobMetadata");
 
             migrationBuilder.DropTable(
                 name: "RecipeIngredients");

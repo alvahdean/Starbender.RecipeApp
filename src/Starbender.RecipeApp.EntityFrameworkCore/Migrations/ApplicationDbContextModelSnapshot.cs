@@ -174,6 +174,9 @@ namespace Starbender.RecipeApp.EntityFrameworkCore.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<string>("ContentType")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<decimal>("Size")
                         .HasColumnType("decimal(20,0)");
 
@@ -406,12 +409,12 @@ namespace Starbender.RecipeApp.EntityFrameworkCore.Migrations
             modelBuilder.Entity("Starbender.RecipeApp.Domain.Shared.Entities.RecipeIngredient", b =>
                 {
                     b.HasOne("Starbender.RecipeApp.Domain.Shared.Entities.Ingredient", "Ingredient")
-                        .WithMany("RecipeIngredients")
+                        .WithMany()
                         .HasForeignKey("IngredientId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Starbender.RecipeApp.Domain.Shared.Entities.Recipe", "Recipe")
+                    b.HasOne("Starbender.RecipeApp.Domain.Shared.Entities.Recipe", null)
                         .WithMany("RecipeIngredients")
                         .HasForeignKey("RecipeId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -424,14 +427,7 @@ namespace Starbender.RecipeApp.EntityFrameworkCore.Migrations
 
                     b.Navigation("Ingredient");
 
-                    b.Navigation("Recipe");
-
                     b.Navigation("Unit");
-                });
-
-            modelBuilder.Entity("Starbender.RecipeApp.Domain.Shared.Entities.Ingredient", b =>
-                {
-                    b.Navigation("RecipeIngredients");
                 });
 
             modelBuilder.Entity("Starbender.RecipeApp.Domain.Shared.Entities.Recipe", b =>
