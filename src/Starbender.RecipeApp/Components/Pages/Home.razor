@@ -1,6 +1,38 @@
 ﻿@page "/"
 
+@using Starbender.RecipeApp.Services.Contracts
+@using Starbender.RecipeApp.Services.Contracts.Dtos
 @using Starbender.RecipeApp.Blazor.Components
 
-<PageTitle>Home</PageTitle>
-<MudAlert Severity="@Severity.Warning">The UI is being updated, will make new commits shortly</MudAlert>
+@inject IRecipeAppService RecipeService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Recipes</PageTitle>
+<MudContainer MaxWidth="MaxWidth.Medium" Class="py-6">
+    <MudText Typo="Typo.h4" Class="mb-4">Recipes</MudText>
+
+    @if (_isLoading)
+    {
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+    }
+    else
+    {
+        <RecipeTable />
+    }
+
+</MudContainer>
+
+@code {
+
+    private bool _isLoading = true;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _isLoading = false;
+    }
+
+    private async Task HandleDialogSavedAsync(RecipeDto _)
+    {
+        //StateHasChanged();
+    }
+}

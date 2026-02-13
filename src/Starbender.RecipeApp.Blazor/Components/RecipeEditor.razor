@@ -4,6 +4,7 @@
     <MudForm Model="_recipeModel" @ref="_form">
         <MudText Typo="Typo.h6" Class="mb-4">Recipe</MudText>
 
+        <RecipeImage IsEditable="true" Width="150" Height="150" RecipeId="@_recipeModel.Id" />
         <MudTextField T="string"
                       Label="Title"
                       Variant="Variant.Outlined"

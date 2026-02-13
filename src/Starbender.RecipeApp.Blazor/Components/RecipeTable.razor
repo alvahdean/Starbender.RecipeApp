@@ -20,9 +20,9 @@
     Dense="true" 
     Hover="true" 
     Bordered="true" 
-    Striped="true"
-    OnRowClick="@HandleRowClick">
+    Striped="true">
     <HeaderContent>
+        <MudTh>Image</MudTh>
         <MudTh>Title</MudTh>
         <MudTh>Description</MudTh>
         <MudTh>Instructions</MudTh>
@@ -31,11 +31,21 @@
     </HeaderContent>
 
     <RowTemplate>
+        <MudTd DataLabel="Image">
+            <RecipeImage Width="150" Height="150" RecipeId="@context.Id" />
+        </MudTd>
         <MudTd DataLabel="Title">@context.Title</MudTd>
         <MudTd DataLabel="Description">@context.Description</MudTd>
         <MudTd DataLabel="Instructions">@context.Instructions</MudTd>
         <MudTd DataLabel="Ingredients">@context.IngredientText</MudTd>
         <MudTd DataLabel="Actions">
+            <span @onclick:stopPropagation="true">
+                <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                               Color="Color.Info"
+                               Size="Size.Small"
+                               OnClick="@(async _ => await HandleEdit(context))"
+                               aria-label="Edit recipe" />
+            </span>
             <span @onclick:stopPropagation="true">
                 <MudIconButton Icon="@Icons.Material.Filled.Delete"
                                Color="Color.Error"

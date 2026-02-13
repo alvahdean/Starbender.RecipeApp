@@ -7,5 +7,5 @@ public class RecipeAppOptions
     public const string ConfigurationKey = "RecipeApp";
     public BlobStoreType ImageStoreType {  get; set; }
     public string ImageContainerId { get; set; } = string.Empty;
-
+    public bool EnableAuthentication { get; set; }
 }

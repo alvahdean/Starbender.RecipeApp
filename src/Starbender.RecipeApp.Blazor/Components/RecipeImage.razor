@@ -1,0 +1,118 @@
+﻿@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.JSInterop
+@using Starbender.BlobStorage.Contracts
+@inject IRecipeAppService RecipeService
+@inherits RecipeComponentBase
+
+<MudPaper Class="pa-2" Style="@($"width:{Width}px;height:{Height}px;position:relative;")"
+          Outlined="true"
+>
+
+    @if (_isBusy)
+    {
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.6);z-index:2;">
+            <MudProgressCircular Indeterminate="true" />
+        </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(_imageDataUrl))
+    {
+        <MudImage Src="@_imageDataUrl" Alt="@Alt" Style="width:100%;height:100%;object-fit:cover;" />
+    }
+    else
+    {
+        <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;">
+            <MudText Typo="Typo.body2">@(IsEditable ? "Drop an image here":"No Image")</MudText>
+        </div>
+    }
+    @if(IsEditable)
+    {
+        <!-- Optional: click-to-upload as fallback -->
+        <InputFile OnChange="OnPickFile" accept="image/*"
+                   style="position:absolute;inset:0;opacity:0;cursor:pointer;" />
+    }
+</MudPaper>
+
+    @code {
+    [Parameter] public int RecipeId { get; set; } = default!;
+    [Parameter] public int Width { get; set; } = 260;
+    [Parameter] public int Height { get; set; } = 260;
+    [Parameter] public string? Alt { get; set; }
+    [Parameter] public EventCallback<string> BlobIdChanged { get; set; }
+    [Parameter] public bool IsEditable { get; set; }
+
+    private bool _isBusy;
+    private string? _imageDataUrl;
+    private IJSObjectReference? _jsModule;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadFromServerIfAny();
+    }
+
+    private async Task LoadFromServerIfAny()
+    {
+        if (_isBusy) return;
+
+        try
+        {
+            _isBusy = true;
+            var dto = await RecipeService.GetRecipeImageAsync(RecipeId, CancellationToken.None);
+            if (dto?.Size > 0)
+            {
+                _imageDataUrl = $"data:{dto.ContentType};base64,{Convert.ToBase64String(dto.Content)}";
+            }
+            else
+            {
+                _imageDataUrl = null;
+            }
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private async Task OnPickFile(InputFileChangeEventArgs e)
+    {
+        if(!IsEditable || e.File is null)
+        {
+            return;
+        }
+
+        try 
+        {
+            await Upload(e.File);
+        } catch(Exception ex) 
+        {
+            Snackbar.Add($"Image save failed: {ex.Message}",Severity.Error);
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private async Task<BlobMetadataDto?> Upload(IBrowserFile file)
+    {
+        BlobMetadataDto? result;
+        try
+        {
+            _isBusy = true;
+
+            using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            var originalBytes = ms.ToArray();
+
+            result = await RecipeService.SetRecipeImage(RecipeId, originalBytes, CancellationToken.None);
+            _imageDataUrl = $"data:{file.ContentType};base64,{Convert.ToBase64String(originalBytes)}";
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+
+        return result;
+    }
+}

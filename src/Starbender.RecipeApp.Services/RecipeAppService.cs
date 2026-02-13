@@ -1,7 +1,9 @@
 ﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Starbender.BlobStorage.Contracts;
+using Starbender.BlobStorage.Entities;
 using Starbender.Core;
 using Starbender.RecipeApp.Domain.Shared.Entities;
 using Starbender.RecipeApp.Services.Contracts;
@@ -26,7 +28,7 @@ public class RecipeAppService : CrudAppService<Recipe, RecipeDto>, IRecipeAppSer
         _options = options.Value;
     }
 
-    public async Task<BlobMetadataDto> SetRecipeImage(int recipeId, byte[] imageBytes, CancellationToken ct=default)
+    public async Task<BlobMetadataDto> SetRecipeImage(int recipeId, byte[] imageBytes, CancellationToken ct = default)
     {
         var container = _containerFactory.GetContainer(_options.ImageStoreType, _options.ImageContainerId)
             ?? throw new Exception($"No Recipe Image container found. ({_options.ImageStoreType}.{_options.ImageContainerId})");
@@ -39,13 +41,23 @@ public class RecipeAppService : CrudAppService<Recipe, RecipeDto>, IRecipeAppSer
         BlobMetadataDto? blobInfo;
         if (blobId == null)
         {
-            blobInfo = await container.CreateContentAsync(imageBytes, ct);
+            blobInfo = await container.CreateContentAsync(new BlobContentCreateDto()
+            {
+                Content = imageBytes,
+                ContentType="image/png"
+            }, ct);
+
             recipe.ImageBlobId = blobInfo.BlobId;
             await UpdateAsync(recipe);
         }
         else
         {
-            blobInfo = await container.UpdateContentAsync(blobId, imageBytes, ct);
+            blobInfo = await container.UpdateContentAsync(new BlobContentUpdateDto() 
+            {
+                Content = imageBytes,
+                BlobId = blobId
+            }, ct);
+
             if (blobInfo.BlobId != blobId)
             {
                 recipe.ImageBlobId = blobInfo.BlobId;
@@ -56,19 +68,27 @@ public class RecipeAppService : CrudAppService<Recipe, RecipeDto>, IRecipeAppSer
         return blobInfo;
     }
 
-    public async Task<byte[]> GetRecipeImageAsync(int recipeId, CancellationToken ct=default)
+    public async Task<BlobContentDto?> GetRecipeImageAsync(int recipeId, CancellationToken ct=default)
     {
-        var container = GetImageContainer() 
-            ?? throw new Exception($"No Recipe Image Blob Container found.");
+        var container = GetImageContainer(); 
+        
+        if(container == null)
+        {
+            return null;
+        }
 
-        var recipe = await GetAsync(recipeId, ct)
-            ?? throw new Exception($"No Recipe with ID={recipeId} found.");
-
+        var recipe = await GetAsync(recipeId, ct);
+        
+        if(recipe==null)
+        {
+            return null;
+        }
         
         var blobId = recipe.ImageBlobId;
+
         var result = !string.IsNullOrWhiteSpace(blobId)
             ? await container.GetContentAsync(blobId, ct)
-            : Array.Empty<byte>();
+            : null;
 
         return result;
     }

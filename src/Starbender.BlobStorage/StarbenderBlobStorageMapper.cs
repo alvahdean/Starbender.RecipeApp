@@ -12,5 +12,7 @@ public class StarbenderBlobStorageMapper : Profile
         CreateMap<BlobMetadata, BlobMetadataDto>()
             .ReverseMap()
             .ForMember(t=>t.Id,o=>o.Ignore());
+
+        CreateMap<BlobMetadata, BlobContentDto>();
     }
 }

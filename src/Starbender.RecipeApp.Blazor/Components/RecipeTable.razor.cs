@@ -27,10 +27,8 @@ public partial class RecipeTable : RecipeComponentBase
         await base.OnInitializedAsync();
     }
 
-    private async Task HandleRowClick(TableRowClickEventArgs<RecipeDto> args)
+    private async Task HandleEdit(RecipeDto selectedRecipe)
     {
-        var selectedRecipe = args.Item;
-
         if (selectedRecipe is null)
         {
             return;

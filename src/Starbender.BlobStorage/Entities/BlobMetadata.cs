@@ -39,4 +39,9 @@ public class BlobMetadata : IEntity<int>
     /// The CRC32 checksum for the content of the content
     /// </summary>
     public uint Checksum { get; set; }
+
+    /// <summary>
+    /// MIME Content-Type of the data
+    /// </summary>
+    public string? ContentType { get; set; }
 }
