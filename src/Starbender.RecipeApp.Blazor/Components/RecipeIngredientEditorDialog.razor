@@ -1,0 +1,196 @@
+@inherits RecipeComponentBase
+
+<MudDialog>
+    <DialogContent>
+        <MudForm Model="_model" @ref="_form">
+            <MudNumericField T="double"
+                             Label="Quantity"
+                             Variant="Variant.Outlined"
+                             Margin="Margin.Dense"
+                             Min="0"
+                             Step="0.25"
+                             For="@(() => _model.Quantity)"
+                             @bind-Value="_model.Quantity"
+                             Required="true" />
+
+            <MudAutocomplete T="string"
+                             Label="Ingredient"
+                             Variant="Variant.Outlined"
+                             Margin="Margin.Dense"
+                             CoerceText="true"
+                             CoerceValue="true"
+                             Clearable="false"
+                             ResetValueOnEmptyText="false"
+                             SearchFunc="SearchIngredientsAsync"
+                             @bind-Value="_ingredientText" />
+
+            <MudAutocomplete T="string"
+                             Label="Unit"
+                             Variant="Variant.Outlined"
+                             Margin="Margin.Dense"
+                             CoerceText="true"
+                             CoerceValue="true"
+                             Clearable="true"
+                             ResetValueOnEmptyText="false"
+                             SearchFunc="SearchUnitsAsync"
+                             @bind-Value="_unitText" />
+        </MudForm>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="HandleCancelAsync">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="HandleSaveAsync">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [Inject] private IIngredientAppService IngredientService { get; set; } = null!;
+    [Inject] private IUnitAppService UnitService { get; set; } = null!;
+
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public RecipeIngredientDto Model { get; set; } = new();
+
+    [Parameter]
+    public EventCallback<RecipeIngredientDto> OnSaveAsync { get; set; }
+
+    private MudForm? _form;
+    private RecipeIngredientDto _model = new();
+    private string _ingredientText = string.Empty;
+    private string? _unitText;
+
+    private List<IngredientDto> _ingredients = [];
+    private List<UnitDto> _units = [];
+    private bool _lookupsLoaded;
+
+    protected override void OnParametersSet()
+    {
+        _model = new RecipeIngredientDto
+        {
+            RecipeId = Model.RecipeId,
+            IngredientId = Model.IngredientId,
+            Quantity = Model.Quantity,
+            UnitId = Model.UnitId,
+            Ingredient = Model.Ingredient,
+            Unit = Model.Unit
+        };
+
+        _ingredientText = _model.Ingredient?.Name ?? string.Empty;
+        _unitText = _model.Unit?.Name;
+    }
+
+    private async Task HandleSaveAsync()
+    {
+        await EnsureLookupsLoadedAsync();
+
+        if (_form is null)
+        {
+            return;
+        }
+
+        await _form.Validate();
+        if (_form.IsValid != true)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_ingredientText))
+        {
+            Snackbar.Add("Ingredient is required.", Severity.Warning);
+            return;
+        }
+
+        var ingredient = await ResolveIngredientAsync(_ingredientText);
+        var unit = await ResolveUnitAsync(_unitText);
+
+        _model.Ingredient = ingredient;
+        _model.IngredientId = ingredient.Id;
+        _model.Unit = unit;
+        _model.UnitId = unit?.Id;
+
+        await OnSaveAsync.InvokeAsync(_model);
+        MudDialog.Close(DialogResult.Ok(_model));
+    }
+
+    private Task HandleCancelAsync()
+    {
+        MudDialog.Cancel();
+        return Task.CompletedTask;
+    }
+
+    private async Task<IEnumerable<string>> SearchIngredientsAsync(string value, CancellationToken _)
+    {
+        await EnsureLookupsLoadedAsync();
+        return FilterLookupNames(_ingredients.Select(x => x.Name), value);
+    }
+
+    private async Task<IEnumerable<string>> SearchUnitsAsync(string value, CancellationToken _)
+    {
+        await EnsureLookupsLoadedAsync();
+        return FilterLookupNames(_units.Select(x => x.Name), value);
+    }
+
+    private static IEnumerable<string> FilterLookupNames(IEnumerable<string> names, string value)
+    {
+        var query = names
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Distinct(StringComparer.OrdinalIgnoreCase);
+
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return query.OrderBy(x => x).Take(25);
+        }
+
+        return query
+            .Where(x => x.Contains(value, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(x => x)
+            .Take(25);
+    }
+
+    private async Task EnsureLookupsLoadedAsync()
+    {
+        if (_lookupsLoaded)
+        {
+            return;
+        }
+
+        _ingredients = (await IngredientService.GetAllAsync()).ToList();
+        _units = (await UnitService.GetAllAsync()).ToList();
+        _lookupsLoaded = true;
+    }
+
+    private async Task<IngredientDto> ResolveIngredientAsync(string value)
+    {
+        var name = value.Trim();
+        var existing = _ingredients.FirstOrDefault(x => string.Equals(x.Name, name, StringComparison.OrdinalIgnoreCase));
+        if (existing is not null)
+        {
+            return existing;
+        }
+
+        var created = await IngredientService.CreateAsync(new IngredientDto { Name = name });
+        _ingredients.Add(created);
+        return created;
+    }
+
+    private async Task<UnitDto?> ResolveUnitAsync(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        var name = value.Trim();
+        var existing = _units.FirstOrDefault(x => string.Equals(x.Name, name, StringComparison.OrdinalIgnoreCase));
+        if (existing is not null)
+        {
+            return existing;
+        }
+
+        var created = await UnitService.CreateAsync(new UnitDto { Name = name });
+        _units.Add(created);
+        return created;
+    }
+}

@@ -1,0 +1,151 @@
+@inherits RecipeComponentBase
+
+<MudPaper Class="mt-4 pa-2">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+        <MudText Typo="Typo.subtitle1">Ingredients</MudText>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="0">
+            @if (IsEditable)
+            {
+                <span @onclick:stopPropagation="true">
+                    <MudIconButton Icon="@Icons.Material.Filled.Add"
+                                   Color="Color.Primary"
+                                   Size="Size.Small"
+                                   OnClick="AddIngredientAsync"
+                                   aria-label="New ingredient" />
+                </span>
+                <MudIconButton Icon="@(_isExpanded ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)"
+                               Color="Color.Default"
+                               Size="Size.Small"
+                               OnClick="ToggleExpanded"
+                               aria-label="Toggle ingredients" />
+            }
+        </MudStack>
+    </MudStack>
+
+    @if (IsEditable)
+    {
+        <MudCollapse Expanded="_isExpanded">
+            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1" Class="mt-2">
+                @foreach (var ingredient in Recipe.RecipeIngredients.ToList())
+                {
+                    <MudChip T="string"
+                             Color="Color.Primary"
+                             Variant="Variant.Outlined"
+                             Size="Size.Small"
+                             OnClick="@(() => EditIngredientAsync(ingredient))">
+                        <MudText Typo="Typo.caption">@ingredient.ToString()</MudText>
+                        <span class="ms-1" @onclick:stopPropagation="true">
+                            <MudIconButton Icon="@Icons.Material.Filled.Close"
+                                           Size="Size.Small"
+                                           Color="Color.Default"
+                                           OnClick="@(() => RemoveIngredientAsync(ingredient))"
+                                           aria-label="Delete ingredient" />
+                        </span>
+                    </MudChip>
+                }
+            </MudStack>
+        </MudCollapse>
+    }
+    else
+    {
+        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1" Class="mt-2">
+            @foreach (var ingredient in Recipe.RecipeIngredients.ToList())
+            {
+                <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined" Size="Size.Small">
+                    <MudText Typo="Typo.caption">@ingredient.ToString()</MudText>
+                </MudChip>
+            }
+        </MudStack>
+    }
+</MudPaper>
+
+@code {
+    [Inject] private IDialogService DialogService { get; set; } = null!;
+
+    [Parameter]
+    public RecipeDto Recipe { get; set; } = new();
+
+    [Parameter]
+    public EventCallback<RecipeDto> RecipeChanged { get; set; }
+
+    [Parameter]
+    public bool IsEditable { get; set; }
+
+    private bool _isExpanded = true;
+
+    private void ToggleExpanded()
+    {
+        _isExpanded = !_isExpanded;
+    }
+
+    private async Task EditIngredientAsync(RecipeIngredientDto ingredient)
+    {
+        var parameters = new DialogParameters<RecipeIngredientEditorDialog>
+        {
+            { x => x.Model, ingredient },
+            { x => x.OnSaveAsync, EventCallback.Factory.Create<RecipeIngredientDto>(this, saved => HandleIngredientSavedAsync(ingredient, saved)) }
+        };
+
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true,
+            CloseOnEscapeKey = true
+        };
+
+        var dialog = await DialogService.ShowAsync<RecipeIngredientEditorDialog>("Edit Ingredient", parameters, options);
+        await dialog.Result;
+    }
+
+    private async Task HandleIngredientSavedAsync(RecipeIngredientDto target, RecipeIngredientDto saved)
+    {
+        target.Quantity = saved.Quantity;
+        target.IngredientId = saved.IngredientId;
+        target.UnitId = saved.UnitId;
+        target.Ingredient = saved.Ingredient;
+        target.Unit = saved.Unit;
+
+        await RecipeChanged.InvokeAsync(Recipe);
+        StateHasChanged();
+    }
+
+    private async Task RemoveIngredientAsync(RecipeIngredientDto ingredient)
+    {
+        Recipe.RecipeIngredients.Remove(ingredient);
+        await RecipeChanged.InvokeAsync(Recipe);
+        StateHasChanged();
+    }
+
+    private async Task AddIngredientAsync()
+    {
+        var newIngredient = new RecipeIngredientDto
+        {
+            RecipeId = Recipe.Id,
+            Quantity = 1,
+            Ingredient = new IngredientDto()
+        };
+
+        var parameters = new DialogParameters<RecipeIngredientEditorDialog>
+        {
+            { x => x.Model, newIngredient },
+            { x => x.OnSaveAsync, EventCallback.Factory.Create<RecipeIngredientDto>(this, HandleNewIngredientSavedAsync) }
+        };
+
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true,
+            CloseOnEscapeKey = true
+        };
+
+        var dialog = await DialogService.ShowAsync<RecipeIngredientEditorDialog>("New Ingredient", parameters, options);
+        await dialog.Result;
+    }
+
+    private async Task HandleNewIngredientSavedAsync(RecipeIngredientDto ingredient)
+    {
+        Recipe.RecipeIngredients.Add(ingredient);
+        await RecipeChanged.InvokeAsync(Recipe);
+        StateHasChanged();
+    }
+}
