@@ -28,7 +28,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             b.HasIndex(p => p.Title).IsUnique();
 
             b.HasMany(r => r.RecipeIngredients)
-                .WithOne(ri => ri.Recipe)
+                .WithOne()
                 .HasForeignKey(ri => ri.RecipeId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
@@ -38,12 +38,6 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             b.HasKey(p => p.Id);
             b.Property(p => p.Id).ValueGeneratedOnAdd();
             b.HasIndex(p => p.Name).IsUnique();
-
-            // Explicit relationships (EF should infer these)
-            b.HasMany(i => i.RecipeIngredients)
-                .WithOne(ri => ri.Ingredient)
-                .HasForeignKey(ri => ri.IngredientId)
-                .OnDelete(DeleteBehavior.Cascade);
         });
 
         builder.Entity<RecipeIngredient>(b =>
@@ -54,6 +48,11 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             b.HasOne(ri => ri.Unit)
                 .WithMany()
                 .HasForeignKey(ri => ri.UnitId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            b.HasOne(ri => ri.Ingredient)
+                .WithMany()
+                .HasForeignKey(ri => ri.IngredientId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 

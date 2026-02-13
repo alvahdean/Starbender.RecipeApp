@@ -7,5 +7,5 @@ namespace Starbender.RecipeApp.Services.Contracts;
 public interface IRecipeAppService : ICrudAppService<RecipeDto>
 {
     Task<BlobMetadataDto> SetRecipeImage(int recipeId, byte[] imageBytes, CancellationToken ct);
-    Task<byte[]> GetRecipeImageAsync(int recipeId, CancellationToken ct = default);
+    Task<BlobContentDto?> GetRecipeImageAsync(int recipeId, CancellationToken ct);
 }

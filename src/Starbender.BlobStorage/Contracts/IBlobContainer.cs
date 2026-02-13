@@ -31,21 +31,21 @@ public interface IBlobContainer
     /// </summary>
     /// <param name="blobId">The ID of the blob to return</param>
     /// <returns>The byte contents of the blob</returns>
-    Task<byte[]> GetContentAsync(string blobId, CancellationToken ct);
+    Task<BlobContentDto> GetContentAsync(string blobId, CancellationToken ct);
 
     /// <summary>
     /// Creates a new blob entry and returns the ID of the entry for later retrieval
     /// </summary>
-    /// <param name="data">The byte data to store</param>
+    /// <param name="content">The data to store</param>
     /// <returns>An ID for the newly stored blob</returns>
-    Task<BlobMetadataDto> CreateContentAsync(byte[] data, CancellationToken ct);
+    Task<BlobMetadataDto> CreateContentAsync(BlobContentCreateDto content, CancellationToken ct);
 
     /// <summary>
     /// Updates an existing blob entry contents
     /// </summary>
     /// <param name="blobId">The id of the blob to update</param>
-    /// <param name="data">The updated data store</param>
-    Task<BlobMetadataDto> UpdateContentAsync(string blobId, byte[] data, CancellationToken ct);
+    /// <param name="content">The updated data store</param>
+    Task<BlobMetadataDto> UpdateContentAsync(BlobContentUpdateDto content, CancellationToken ct);
 
     /// <summary>
     /// Deletes an existing blob with the specified ID

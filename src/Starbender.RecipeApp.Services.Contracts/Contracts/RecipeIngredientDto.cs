@@ -26,11 +26,6 @@ public class RecipeIngredientDto : IDto
     public int? UnitId { get; set; }
 
     /// <summary>
-    /// Nav property to the recipe
-    /// </summary>
-    public RecipeDto Recipe { get; set; } = null!;
-
-    /// <summary>
     /// Nav property to the ingredient
     /// </summary>
     public IngredientDto Ingredient { get; set; } = null!;

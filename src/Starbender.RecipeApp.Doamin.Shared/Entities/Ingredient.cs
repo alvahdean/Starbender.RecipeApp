@@ -14,9 +14,4 @@ public class Ingredient : IEntity<int>
     /// The name of the ingredient
     /// </summary>
     public string Name { get; set; } = null!;
-
-    /// <summary>
-    /// Nav property to all the recipes that contain this ingredient (via mapping table)
-    /// </summary>
-    public HashSet<RecipeIngredient> RecipeIngredients { get; set; } = new HashSet<RecipeIngredient>();
 }

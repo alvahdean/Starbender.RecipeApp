@@ -20,7 +20,7 @@ public class RecipeDto : IDto<int>
     public string Description { get; set; } = null!;
 
     /// <summary>
-    /// The blobId for the recipe image
+    /// The blob id for the recipe image
     /// </summary>
     public string? ImageBlobId { get; set; }
 
@@ -33,9 +33,9 @@ public class RecipeDto : IDto<int>
     /// Indicates if the recipe is publicly viewable
     /// </summary>
     public bool IsPublic { get; set; }
-    
+
     /// <summary>
-    /// Instructions for how to make the recipe
+    /// Instuctions for the recipe
     /// </summary>
     public string? Instructions { get; set; }
 

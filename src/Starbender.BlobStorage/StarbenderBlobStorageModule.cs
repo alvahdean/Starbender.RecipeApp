@@ -16,14 +16,19 @@ public class StarbenderBlobStorageModule : ModuleBase
         services.AddModule<StarbenderCoreModule>();
 
         // Add service registrations here...
-        services.AddAutoMapper(typeof(StarbenderBlobStorageMapper));
-
-        services.AddSingleton<IBlobContainerFactory, BlobContainerFactory>();
+        ConfigureAutomapping(services);
+        ConfigureBlobStorageOptions(services);
+        ConfigureContainers(services);
 
         return services;
     }
 
-    public void ConfigureOptions(IServiceCollection services)
+    public void ConfigureAutomapping(IServiceCollection services)
+    {
+        services.AddAutoMapper(typeof(StarbenderBlobStorageMapper));
+    }
+
+    public void ConfigureBlobStorageOptions(IServiceCollection services)
     {
         var serviceProvider = services.BuildServiceProvider();
         var configuration = serviceProvider.GetRequiredService<IConfiguration>();
@@ -44,12 +49,14 @@ public class StarbenderBlobStorageModule : ModuleBase
         configuration.GetSection(BlobStoreOptions.DefaultConfigurationKey)
             .Bind(options);
 
+        services.AddTransient<IBlobContainerFactory, BlobContainerFactory>();
+
         foreach (var containerOptions in options.Containers)
         {
             switch (containerOptions.StoreType)
             {
                 case BlobStoreType.Filesystem:
-                    services.AddSingleton<IBlobContainer>(sp => new FilesystemContainerProvider(sp, containerOptions));
+                    services.AddTransient<IBlobContainer>(sp => new FilesystemContainerProvider(sp, containerOptions));
                     break;
 
                 case BlobStoreType.Unspecified:

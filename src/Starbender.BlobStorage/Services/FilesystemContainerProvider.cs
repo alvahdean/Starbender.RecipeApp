@@ -59,18 +59,20 @@ public class FilesystemContainerProvider : IBlobContainer
         return result;
     }
 
-    public Task<byte[]> GetContentAsync(string blobId, CancellationToken ct = default)
+    public async Task<BlobContentDto> GetContentAsync(string blobId, CancellationToken ct = default)
     {
         var path = Path.Combine(_options.Parameters[RootPathKey], blobId);
+        var metadata = await Metadata().Where(t => t.BlobId == blobId).FirstOrDefaultAsync(ct);
+        var result = _mapper.Map<BlobContentDto>(metadata);
 
-        var result = File.Exists(path)
-            ? File.ReadAllBytesAsync(path, ct)
+        result.Content = File.Exists(path)
+            ? await File.ReadAllBytesAsync(path, ct)
             : throw new Exception($"Blob '{blobId}' not found");
 
         return result;
     }
 
-    public async Task<BlobMetadataDto> CreateContentAsync(byte[] data, CancellationToken ct = default)
+    public async Task<BlobMetadataDto> CreateContentAsync(BlobContentCreateDto content, CancellationToken ct = default)
     {
         if (IsReadOnly)
         {
@@ -78,6 +80,7 @@ public class FilesystemContainerProvider : IBlobContainer
         }
 
         var blobId = Guid.NewGuid().ToString();
+        var data = content.Content;
 
         var path = Path.Combine(_options.Parameters[RootPathKey], blobId);
 
@@ -104,12 +107,15 @@ public class FilesystemContainerProvider : IBlobContainer
         return result;
     }
 
-    public async Task<BlobMetadataDto> UpdateContentAsync(string blobId, byte[] data, CancellationToken ct = default)
+    public async Task<BlobMetadataDto> UpdateContentAsync(BlobContentUpdateDto content, CancellationToken ct = default)
     {
         if (IsReadOnly)
         {
             throw new Exception("Blob container is read only");
         }
+        
+        var blobId = content.BlobId;
+        var data = content.Content;
 
         var path = Path.Combine(_options.Parameters[RootPathKey], blobId);
 

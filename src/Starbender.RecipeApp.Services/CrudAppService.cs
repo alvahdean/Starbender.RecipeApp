@@ -20,6 +20,7 @@ public class CrudAppService<TEntity, TDto> : CrudAppService<TEntity, TDto, int>,
 public class CrudAppService<TEntity, TDto, TKey> : ICrudAppService<TDto, TKey>
     where TEntity : class, IHasId<TKey>
     where TDto : class, IHasId<TKey>
+    where TKey: notnull
 {
     protected IMapper Mapper { get; init; }
     protected ILogger Logger { get; init; }
@@ -63,9 +64,28 @@ public class CrudAppService<TEntity, TDto, TKey> : ICrudAppService<TDto, TKey>
 
     public async Task<TDto> UpdateAsync(TDto dto, CancellationToken ct = default)
     {
-        var entity = await GetAsync(dto.Id, ct);
+        if (dto == null)
+        {
+            throw new ArgumentNullException(nameof(dto));
+        }
+
+        if (dto.Id.Equals(default(TKey)))
+        {
+            return await CreateAsync(dto, ct);
+        }
+
+        var entity = await Repo.GetAsync(dto.Id, ct);
+
+        if (entity == null)
+        {
+            return await CreateAsync(dto, ct);
+        }
+
         Mapper.Map(dto, entity);
-        var result = Mapper.Map<TDto>(entity);
+
+        var updated = await Repo.UpdateAsync(entity, ct);
+
+        var result = Mapper.Map<TDto>(updated);
 
         return result;
     }

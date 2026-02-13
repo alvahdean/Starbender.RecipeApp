@@ -1,0 +1,48 @@
+﻿@inherits RecipeComponentBase
+
+<MudButton 
+    Variant="Variant.Filled" 
+    Color="Color.Primary"
+    OnClick="OnClick"
+    Disabled="@_isBusy">
+    @(_isBusy ? "Creating..." : "Create")
+</MudButton>
+
+@code {
+    [Inject] IDialogService DialogService { get; set; } = default!;
+    [Parameter] public EventCallback<RecipeDto> HandleDialogSavedAsync { get; set; }
+
+    private bool _isBusy;
+
+    private async Task OnClick()
+    {
+        if (_isBusy)
+            return;
+
+        try
+        {
+            _isBusy = true;
+            var selectedRecipe = new RecipeDto();
+
+            var parameters = new DialogParameters<RecipeEditorDialog>
+        {
+            { x => x.Model, selectedRecipe },
+            // { x => x.OnSaved, EventCallback.Factory.Create<RecipeDto>(this, HandleDialogSavedAsync) }
+        };
+
+            var options = new DialogOptions
+            {
+                MaxWidth = MaxWidth.Medium,
+                FullWidth = true,
+                CloseOnEscapeKey = true
+            };
+
+            var dialog = await DialogService.ShowAsync<RecipeEditorDialog>("Edit Recipe", parameters, options);
+            await dialog.Result;
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+}

@@ -14,9 +14,4 @@ public class IngredientDto : IDto<int>
     /// The name of the ingredient
     /// </summary>
     public string Name { get; set; } = null!;
-
-    /// <summary>
-    /// Nav property to all the recipes that contain this ingredient (via mapping table)
-    /// </summary>
-    public HashSet<RecipeIngredientDto> RecipeIngredients { get; set; } = new HashSet<RecipeIngredientDto>();
 }
