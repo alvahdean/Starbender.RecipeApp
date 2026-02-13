@@ -1,0 +1,44 @@
+@inherits RecipeComponentBase
+
+<RecipeEditor Model="Model" OnValidSubmit="HandleSavedAsync" OnCancel="HandleCancelAsync" />
+
+@code {
+
+    [Inject] private IRecipeAppService RecipeService { get; set; } = null!;
+
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public RecipeDto Model { get; set; } = new();
+
+    [Parameter]
+    public EventCallback<RecipeDto> OnSaved { get; set; }
+
+    private async Task HandleSavedAsync(RecipeDto recipe)
+    {
+        await OnSaved.InvokeAsync(recipe);
+
+        try
+        {
+
+            Model = Model.Id == 0
+                ? await RecipeService.CreateAsync(Model)
+                : await RecipeService.UpdateAsync(Model);
+
+            Snackbar.Add("Saved", Severity.Success);
+
+        } catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+
+        MudDialog.Close(DialogResult.Ok(recipe));
+    }
+
+    private Task HandleCancelAsync()
+    {
+        MudDialog.Cancel();
+        return Task.CompletedTask;
+    }
+}

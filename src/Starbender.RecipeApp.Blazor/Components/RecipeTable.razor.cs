@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components;
+using MudBlazor;
 using Starbender.RecipeApp.Services.Contracts;
 using Starbender.RecipeApp.Services.Contracts.Dtos;
 
@@ -7,6 +8,7 @@ namespace Starbender.RecipeApp.Blazor.Components;
 public partial class RecipeTable : RecipeComponentBase
 {
     [Inject] IRecipeAppService RecipeService { get; set; } = default!;
+    [Inject] IDialogService DialogService { get; set; } = default!;
 
     private List<RecipeDto> _recipes = new();
     private string _searchTerm = string.Empty;
@@ -23,5 +25,37 @@ public partial class RecipeTable : RecipeComponentBase
         _recipes = (await RecipeService.GetAllAsync()).ToList();
 
         await base.OnInitializedAsync();
+    }
+
+    private async Task HandleRowClick(TableRowClickEventArgs<RecipeDto> args)
+    {
+        var selectedRecipe = args.Item;
+
+        if (selectedRecipe is null)
+        {
+            return;
+        }
+
+        var parameters = new DialogParameters<RecipeEditorDialog>
+        {
+            { x => x.Model, selectedRecipe },
+            { x => x.OnSaved, EventCallback.Factory.Create<RecipeDto>(this, HandleDialogSavedAsync) }
+        };
+
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true,
+            CloseOnEscapeKey = true
+        };
+
+        var dialog = await DialogService.ShowAsync<RecipeEditorDialog>("Edit Recipe", parameters, options);
+        await dialog.Result;
+    }
+
+    private async Task HandleDialogSavedAsync(RecipeDto _)
+    {
+        _recipes = (await RecipeService.GetAllAsync()).ToList();
+        StateHasChanged();
     }
 }

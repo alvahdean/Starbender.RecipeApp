@@ -1,12 +1,13 @@
-﻿
+﻿@using Starbender.RecipeApp.Blazor.Components.Button
+
 @inherits RecipeComponentBase
 
 <MudStack Row>
-<h6>Recipes</h6>
-<MudSpacer/>
-<SeedButton />
-<MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/recipes/edit/0">Add Recipe</MudButton>
+    <MudSpacer/>
+    <SeedButton />
+    <CreateRecipeButton HandleDialogSavedAsync="HandleDialogSavedAsync" />
 </MudStack>
+
 <MudTextField T="string"
               Label="Search recipes"
               Placeholder="Search title or description"
@@ -14,18 +15,24 @@
               Margin="Margin.Dense"
               Immediate="true"
               @bind-Value="_searchTerm" />
-<MudTable Items="FilteredRecipes" Dense="true" Hover="true" Bordered="true" Striped="true">
+
+<MudTable T="RecipeDto" Items="FilteredRecipes" 
+    Dense="true" 
+    Hover="true" 
+    Bordered="true" 
+    Striped="true"
+    OnRowClick="@HandleRowClick">
     <HeaderContent>
-        <MudTh>Id</MudTh>
         <MudTh>Title</MudTh>
         <MudTh>Description</MudTh>
+        <MudTh>Instructions</MudTh>
         <MudTh>Ingredients</MudTh>
     </HeaderContent>
 
     <RowTemplate>
-        <MudTd DataLabel="Id">@context.Id</MudTd>
         <MudTd DataLabel="Title">@context.Title</MudTd>
         <MudTd DataLabel="Description">@context.Description</MudTd>
+        <MudTd DataLabel="Instructions">@context.Instructions</MudTd>
         <MudTd DataLabel="Ingredients">@context.IngredientText</MudTd>
     </RowTemplate>
 </MudTable>

@@ -35,7 +35,7 @@
             <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="HandleSubmitAsync">
                 Save
             </MudButton>
-            <MudButton Color="Color.Default" Variant="Variant.Outlined" OnClick="HandleCancelAsync">
+            <MudButton Color="Color.Default" Variant="Variant.Outlined" OnClick="OnCancel">
                 Cancel
             </MudButton>
         </MudStack>
@@ -43,9 +43,6 @@
 </MudPaper>
 
 @code {
-
-    [Inject] private IRecipeAppService RecipeService { get; set; } = null!;
-
     private MudForm? _form;
     private RecipeDto _recipeModel = new();
 
@@ -75,7 +72,6 @@
             RecipeIngredients = Model.RecipeIngredients
         };
     }
-
     private async Task HandleSubmitAsync()
     {
         if (_form is null)
@@ -98,27 +94,7 @@
         Model.Instructions = _recipeModel.Instructions;
         Model.RecipeIngredients = _recipeModel.RecipeIngredients;
 
-        try
-        {
-
-            Model = Model.Id == 0
-                ? await RecipeService.CreateAsync(Model)
-                : await RecipeService.UpdateAsync(Model);
-
-            Snackbar.Add("Saved", Severity.Success);
-
-        } catch (Exception ex)
-        {
-            Snackbar.Add(ex.Message, Severity.Error);
-        }
-
         await ModelChanged.InvokeAsync(Model);
         await OnValidSubmit.InvokeAsync(Model);
-    }
-
-    private Task HandleCancelAsync()
-    {
-        Snackbar.Add("Edit Cancelled", Severity.Warning);
-        return OnCancel.InvokeAsync();
     }
 }
