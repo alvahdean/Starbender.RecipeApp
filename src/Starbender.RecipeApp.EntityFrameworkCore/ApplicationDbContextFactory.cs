@@ -22,9 +22,20 @@ public sealed class ApplicationDbContextFactory
 
         var connectionString = configuration.GetConnectionString("Default")
             ?? throw new InvalidOperationException("Connection string 'Default' not found.");
+        var sqlServerSection = configuration.GetSection("Database:SqlServer");
+        var commandTimeoutSeconds = sqlServerSection.GetValue<int?>("CommandTimeoutSeconds") ?? 180;
+        var maxRetryCount = sqlServerSection.GetValue<int?>("MaxRetryCount") ?? 10;
+        var maxRetryDelaySeconds = sqlServerSection.GetValue<int?>("MaxRetryDelaySeconds") ?? 30;
 
         var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseSqlServer(connectionString);
+            .UseSqlServer(connectionString, sqlOptions =>
+            {
+                sqlOptions.CommandTimeout(commandTimeoutSeconds);
+                sqlOptions.EnableRetryOnFailure(
+                    maxRetryCount: maxRetryCount,
+                    maxRetryDelay: TimeSpan.FromSeconds(maxRetryDelaySeconds),
+                    errorNumbersToAdd: null);
+            });
 
         return new ApplicationDbContext(optionsBuilder.Options);
     }

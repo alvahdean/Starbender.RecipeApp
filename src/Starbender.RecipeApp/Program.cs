@@ -1,6 +1,10 @@
+using Azure.Extensions.AspNetCore.Configuration.Secrets;
+using Azure.Identity;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Starbender.Core.Extensions;
 using Starbender.RecipeApp.Components;
 using Starbender.RecipeApp.Components.Account;
@@ -13,6 +17,18 @@ namespace Starbender.RecipeApp
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            var keyVaultSection = builder.Configuration.GetSection("KeyVault");
+            if (keyVaultSection.GetValue<bool>("Enabled"))
+            {
+                var vaultUri = keyVaultSection["VaultUri"];
+                if (string.IsNullOrWhiteSpace(vaultUri))
+                {
+                    throw new InvalidOperationException("KeyVault:VaultUri is required when KeyVault is enabled.");
+                }
+
+                builder.Configuration.AddAzureKeyVault(new Uri(vaultUri), new DefaultAzureCredential());
+            }
+
             // Add services to the container.
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents();
@@ -21,18 +37,77 @@ namespace Starbender.RecipeApp
             builder.Services.AddScoped<IdentityRedirectManager>();
             builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
 
-            builder.Services.AddAuthentication(options =>
+            var authenticationBuilder = builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultScheme = IdentityConstants.ApplicationScheme;
+                options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
+            });
+
+            authenticationBuilder.AddIdentityCookies();
+
+            var entraIdSection = builder.Configuration.GetSection("Authentication:EntraId");
+            if (entraIdSection.GetValue<bool>("Enabled"))
+            {
+                var clientId = entraIdSection["ClientId"];
+                var clientSecret = entraIdSection["ClientSecret"];
+                var authority = entraIdSection["Authority"];
+                var tenantId = entraIdSection["TenantId"];
+
+                if (string.IsNullOrWhiteSpace(clientId))
                 {
-                    options.DefaultScheme = IdentityConstants.ApplicationScheme;
-                    options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
-                })
-                .AddIdentityCookies();
+                    throw new InvalidOperationException("Authentication:EntraId:ClientId is required when Entra ID authentication is enabled.");
+                }
+
+                if (string.IsNullOrWhiteSpace(clientSecret))
+                {
+                    throw new InvalidOperationException("Authentication:EntraId:ClientSecret is required when Entra ID authentication is enabled.");
+                }
+
+                if (string.IsNullOrWhiteSpace(authority))
+                {
+                    if (string.IsNullOrWhiteSpace(tenantId))
+                    {
+                        throw new InvalidOperationException("Authentication:EntraId:TenantId is required when Authority is not provided.");
+                    }
+
+                    authority = $"https://login.microsoftonline.com/{tenantId}/v2.0";
+                }
+
+                authenticationBuilder.AddOpenIdConnect("EntraId", options =>
+                {
+                    options.SignInScheme = IdentityConstants.ExternalScheme;
+                    options.Authority = authority;
+                    options.ClientId = clientId;
+                    options.ClientSecret = clientSecret;
+                    options.ResponseType = OpenIdConnectResponseType.Code;
+                    options.UsePkce = true;
+                    options.SaveTokens = true;
+                    options.GetClaimsFromUserInfoEndpoint = true;
+                    options.CallbackPath = entraIdSection["CallbackPath"] ?? "/signin-oidc";
+                    options.SignedOutCallbackPath = entraIdSection["SignedOutCallbackPath"] ?? "/signout-callback-oidc";
+                    options.Scope.Clear();
+                    options.Scope.Add("openid");
+                    options.Scope.Add("profile");
+                    options.Scope.Add("email");
+                });
+            }
 
             var connectionString = builder.Configuration.GetConnectionString("Default")
                 ?? throw new InvalidOperationException("Connection string 'Default' not found.");
+            var sqlServerSection = builder.Configuration.GetSection("Database:SqlServer");
+            var commandTimeoutSeconds = sqlServerSection.GetValue<int?>("CommandTimeoutSeconds") ?? 180;
+            var maxRetryCount = sqlServerSection.GetValue<int?>("MaxRetryCount") ?? 10;
+            var maxRetryDelaySeconds = sqlServerSection.GetValue<int?>("MaxRetryDelaySeconds") ?? 30;
 
             builder.Services.AddDbContext<ApplicationDbContext>(
-                options => options.UseSqlServer(connectionString),
+                options => options.UseSqlServer(connectionString, sqlOptions =>
+                {
+                    sqlOptions.CommandTimeout(commandTimeoutSeconds);
+                    sqlOptions.EnableRetryOnFailure(
+                        maxRetryCount: maxRetryCount,
+                        maxRetryDelay: TimeSpan.FromSeconds(maxRetryDelaySeconds),
+                        errorNumbersToAdd: null);
+                }),
                 contextLifetime: ServiceLifetime.Transient,
                 optionsLifetime: ServiceLifetime.Scoped);
 
@@ -69,6 +144,8 @@ namespace Starbender.RecipeApp
             app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
             app.UseHttpsRedirection();
 
+            app.UseAuthentication();
+            app.UseAuthorization();
             app.UseAntiforgery();
 
             app.MapStaticAssets();
