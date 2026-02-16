@@ -3,37 +3,42 @@
 <MudDialog>
     <DialogContent>
         <MudForm Model="_model" @ref="_form">
-            <MudNumericField T="double"
-                             Label="Quantity"
-                             Variant="Variant.Outlined"
-                             Margin="Margin.Dense"
-                             Min="0"
-                             Step="0.25"
-                             For="@(() => _model.Quantity)"
-                             @bind-Value="_model.Quantity"
-                             Required="true" />
+            <MudStack Row>
+                <MudNumericField 
+                    T="double"
+                    Label="Quantity"
+                    Variant="Variant.Outlined"
+                    Margin="Margin.Dense"
+                    Min="0"
+                    Step="0.25"
+                    For="@(() => _model.Quantity)"
+                    @bind-Value="_model.Quantity"
+                    Required="true" />
 
-            <MudAutocomplete T="string"
-                             Label="Ingredient"
-                             Variant="Variant.Outlined"
-                             Margin="Margin.Dense"
-                             CoerceText="true"
-                             CoerceValue="true"
-                             Clearable="false"
-                             ResetValueOnEmptyText="false"
-                             SearchFunc="SearchIngredientsAsync"
-                             @bind-Value="_ingredientText" />
+                <MudAutocomplete 
+                    T="string"
+                    Label="Unit"
+                    Variant="Variant.Outlined"
+                    Margin="Margin.Dense"
+                    CoerceText="true"
+                    CoerceValue="true"
+                    Clearable="true"
+                    ResetValueOnEmptyText="false"
+                    SearchFunc="SearchUnitsAsync"
+                    @bind-Value="_unitText" />
 
-            <MudAutocomplete T="string"
-                             Label="Unit"
-                             Variant="Variant.Outlined"
-                             Margin="Margin.Dense"
-                             CoerceText="true"
-                             CoerceValue="true"
-                             Clearable="true"
-                             ResetValueOnEmptyText="false"
-                             SearchFunc="SearchUnitsAsync"
-                             @bind-Value="_unitText" />
+                <MudAutocomplete 
+                    T="string"
+                    Label="Ingredient"
+                    Variant="Variant.Outlined"
+                    Margin="Margin.Dense"
+                    CoerceText="true"
+                    CoerceValue="true"
+                    Clearable="false"
+                    ResetValueOnEmptyText="false"
+                    SearchFunc="SearchIngredientsAsync"
+                    @bind-Value="_ingredientText" />
+            </MudStack>
         </MudForm>
     </DialogContent>
 

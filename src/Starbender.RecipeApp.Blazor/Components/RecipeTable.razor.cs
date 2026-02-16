@@ -1,17 +1,28 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Options;
 using MudBlazor;
 using Starbender.RecipeApp.Services.Contracts;
 using Starbender.RecipeApp.Services.Contracts.Dtos;
+using Starbender.RecipeApp.Services.Contracts.Options;
 
 namespace Starbender.RecipeApp.Blazor.Components;
 
 public partial class RecipeTable : RecipeComponentBase
 {
     [Inject] IRecipeAppService RecipeService { get; set; } = default!;
+    [Inject] IOptions<RecipeAppOptions> Options { get; set; } = default!;
     [Inject] IDialogService DialogService { get; set; } = default!;
+
+    [Parameter] public bool CanCollapse { get; set; } = false;
+    [Parameter] public bool IsEditable { get; set; } = true;
 
     private List<RecipeDto> _recipes = new();
     private string _searchTerm = string.Empty;
+    private RecipeAppOptions _options = new();
+    private bool _isExpanded = true;
+
+    private void ToggleExpanded() => 
+        _isExpanded = !_isExpanded;
 
     private IEnumerable<RecipeDto> FilteredRecipes =>
         string.IsNullOrWhiteSpace(_searchTerm)
@@ -23,11 +34,12 @@ public partial class RecipeTable : RecipeComponentBase
     protected override async Task OnInitializedAsync()
     {
         _recipes = (await RecipeService.GetAllAsync()).ToList();
+        _options = Options.Value;
 
         await base.OnInitializedAsync();
     }
 
-    private async Task HandleEdit(RecipeDto selectedRecipe)
+    private async Task HandleEditAsync(RecipeDto? selectedRecipe)
     {
         if (selectedRecipe is null)
         {
@@ -51,13 +63,7 @@ public partial class RecipeTable : RecipeComponentBase
         await dialog.Result;
     }
 
-    private async Task HandleDialogSavedAsync(RecipeDto _)
-    {
-        _recipes = (await RecipeService.GetAllAsync()).ToList();
-        StateHasChanged();
-    }
-
-    private async Task DeleteRecipeAsync(RecipeDto recipe)
+    private async Task HandleDeleteAsync(RecipeDto recipe)
     {
         var confirmed = await DialogService.ShowMessageBox(
             "Delete Recipe",
@@ -81,5 +87,11 @@ public partial class RecipeTable : RecipeComponentBase
         {
             Snackbar.Add($"Delete failed: {ex.Message}", Severity.Error);
         }
+    }
+
+    private async Task HandleDialogSavedAsync(RecipeDto _)
+    {
+        _recipes = (await RecipeService.GetAllAsync()).ToList();
+        StateHasChanged();
     }
 }
