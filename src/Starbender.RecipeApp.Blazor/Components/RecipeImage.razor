@@ -1,63 +1,89 @@
-﻿@using Microsoft.AspNetCore.Components.Forms
-@using Microsoft.JSInterop
+@using Microsoft.AspNetCore.Components.Forms
 @using Starbender.BlobStorage.Contracts
 @inject IRecipeAppService RecipeService
 @inherits RecipeComponentBase
+@implements IDisposable
 
-<MudPaper Class="pa-2" Style="@($"width:{Width}px;height:{Height}px;position:relative;")"
-          Outlined="true"
->
+<MudPaper
+    MinWidth="@WidthPx"
+    MinHeight="@HeightPx"
+    Class="pa-2 d-flex justify-center align-center"
+    Outlined="true"
+    Style=@($"width:{WidthPx}; height:{HeightPx}; position:relative;")>
 
     @if (_isBusy)
     {
-        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.6);z-index:2;">
+        <div style=@($"width:{WidthPx}; height:{HeightPx};position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.6);z-index:2;")>
             <MudProgressCircular Indeterminate="true" />
         </div>
     }
 
     @if (!string.IsNullOrWhiteSpace(_imageDataUrl))
     {
-        <MudImage Src="@_imageDataUrl" Alt="@Alt" Style="width:100%;height:100%;object-fit:cover;" />
+        <MudImage Width="@Width" Height="@Height" Src="@_imageDataUrl" Alt="@Alt" Style=@($"width:{WidthPx}; height:{HeightPx}; object-fit:contain;") />
     }
     else
     {
-        <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;">
-            <MudText Typo="Typo.body2">@(IsEditable ? "Drop an image here":"No Image")</MudText>
+        <div style="display:flex;align-items:center;justify-content:center;">
+            <MudText Typo="Typo.body2">@(IsEditable ? "Drop an image or click to upload" : "No Image")</MudText>
         </div>
     }
-    @if(IsEditable)
+
+    @if (IsEditable)
     {
         <!-- Optional: click-to-upload as fallback -->
-        <InputFile OnChange="OnPickFile" accept="image/*"
-                   style="position:absolute;inset:0;opacity:0;cursor:pointer;" />
+        <InputFile
+            OnChange="OnPickFile"
+            accept="image/*"
+            style="position:absolute;inset:0;opacity:0;cursor:pointer;" />
     }
+
 </MudPaper>
 
-    @code {
+@code {
     [Parameter] public int RecipeId { get; set; } = default!;
-    [Parameter] public int Width { get; set; } = 260;
-    [Parameter] public int Height { get; set; } = 260;
+    [Parameter] public int Width { get; set; } = 250;
+    [Parameter] public int Height { get; set; } = 250;
     [Parameter] public string? Alt { get; set; }
-    [Parameter] public EventCallback<string> BlobIdChanged { get; set; }
     [Parameter] public bool IsEditable { get; set; }
+    [Parameter] public EventCallback<string> BlobIdChanged { get; set; }
 
     private bool _isBusy;
     private string? _imageDataUrl;
-    private IJSObjectReference? _jsModule;
+    private int? _loadedRecipeId;
+    private readonly CancellationTokenSource _componentCts = new();
+
+    private string WidthPx => $"{Width}px";
+    private string HeightPx => $"{Height}px";
 
     protected override async Task OnParametersSetAsync()
     {
+        if (RecipeId <= 0)
+        {
+            _imageDataUrl = null;
+            _loadedRecipeId = null;
+            return;
+        }
+
+        if (_loadedRecipeId == RecipeId)
+        {
+            return;
+        }
+
         await LoadFromServerIfAny();
     }
 
     private async Task LoadFromServerIfAny()
     {
-        if (_isBusy) return;
+        if (_isBusy || _componentCts.IsCancellationRequested)
+        {
+            return;
+        }
 
         try
         {
             _isBusy = true;
-            var dto = await RecipeService.GetRecipeImageAsync(RecipeId, CancellationToken.None);
+            var dto = await RecipeService.GetRecipeImageAsync(RecipeId, _componentCts.Token);
 
             if (dto?.Size > 0)
             {
@@ -67,6 +93,12 @@
             {
                 _imageDataUrl = null;
             }
+
+            _loadedRecipeId = RecipeId;
+        }
+        catch (OperationCanceledException) when (_componentCts.IsCancellationRequested)
+        {
+            // Ignore cancellation during disposal/navigation.
         }
         finally
         {
@@ -76,39 +108,41 @@
 
     private async Task OnPickFile(InputFileChangeEventArgs e)
     {
-        if(!IsEditable || e.File is null)
+        if (!IsEditable || e.File is null || _componentCts.IsCancellationRequested)
         {
             return;
         }
 
-        try 
+        try
         {
             await Upload(e.File);
-        } catch(Exception ex) 
-        {
-            Snackbar.Add($"Image save failed: {ex.Message}",Severity.Error);
         }
-        finally
+        catch (OperationCanceledException) when (_componentCts.IsCancellationRequested)
         {
-            _isBusy = false;
+            // Ignore cancellation during disposal/navigation.
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Image save failed: {ex.Message}", Severity.Error);
         }
     }
 
-    private async Task<BlobMetadataDto?> Upload(IBrowserFile file)
+    private async Task<BlobMetadataDto> Upload(IBrowserFile file)
     {
-        BlobMetadataDto? result;
+        BlobMetadataDto result;
         try
         {
             _isBusy = true;
 
-            using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
+            using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024, _componentCts.Token);
             using var ms = new MemoryStream();
-            await stream.CopyToAsync(ms);
+            await stream.CopyToAsync(ms, _componentCts.Token);
             var originalBytes = ms.ToArray();
 
-            result = await RecipeService.SetRecipeImage(RecipeId, originalBytes, CancellationToken.None);
+            result = await RecipeService.SetRecipeImage(RecipeId, originalBytes, _componentCts.Token);
             _imageDataUrl = $"data:{file.ContentType};base64,{Convert.ToBase64String(originalBytes)}";
-            
+            _loadedRecipeId = RecipeId;
+
             if (!string.IsNullOrWhiteSpace(result.BlobId))
             {
                 await BlobIdChanged.InvokeAsync(result.BlobId);
@@ -120,5 +154,16 @@
         }
 
         return result;
+    }
+
+    public void Dispose()
+    {
+        if (_componentCts.IsCancellationRequested)
+        {
+            return;
+        }
+
+        _componentCts.Cancel();
+        _componentCts.Dispose();
     }
 }

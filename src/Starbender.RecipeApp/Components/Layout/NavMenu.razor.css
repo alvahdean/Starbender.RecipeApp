@@ -87,6 +87,8 @@
         height: 3rem;
         display: flex;
         align-items: center;
+        justify-content: flex-start;
+        text-align: left;
         line-height: 3rem;
         width: 100%;
     }

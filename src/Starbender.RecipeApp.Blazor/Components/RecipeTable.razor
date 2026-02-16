@@ -6,17 +6,28 @@
     <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
         <MudText Typo="Typo.h6">Recipes</MudText>
         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-            <SeedButton />
+            
+            @if (_options.EnableSeeding)
+            {
+                <SeedButton />
+            }
+
             <CreateRecipeButton HandleDialogSavedAsync="HandleDialogSavedAsync" />
-            <MudIconButton Icon="@(_isExpanded ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)"
-                           Color="Color.Default"
-                           Size="Size.Small"
-                           OnClick="ToggleExpanded"
-                           aria-label="Toggle recipes" />
+            
+            @if(CanCollapse)
+            {
+                <MudIconButton 
+                    Icon="@(_isExpanded ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)"
+                    Color="Color.Default"
+                    Size="Size.Small"
+                    OnClick="ToggleExpanded"
+                    aria-label="Toggle recipes" />
+            }
+
         </MudStack>
     </MudStack>
 
-    <MudCollapse Expanded="_isExpanded">
+    <MudCollapse Expanded=@(!CanCollapse || _isExpanded)>
         <MudTextField T="string"
                       Label="Search recipes"
                       Placeholder="Search title or description"
@@ -25,54 +36,13 @@
                       Immediate="true"
                       @bind-Value="_searchTerm" />
 
-        <MudTable T="RecipeDto" Items="FilteredRecipes"
-                  Dense="true"
-                  Hover="true"
-                  Bordered="true"
-                  Striped="true">
-            <HeaderContent>
-                <MudTh>Image</MudTh>
-                <MudTh>Title</MudTh>
-                <MudTh>Description</MudTh>
-                <MudTh>Instructions</MudTh>
-                <MudTh>Ingredients</MudTh>
-                <MudTh>Actions</MudTh>
-            </HeaderContent>
+    @foreach(var recipe in FilteredRecipes)
+    {
+        <RecipeItem Recipe="@recipe" 
+            OnDelete="HandleDeleteAsync" 
+            OnClick="HandleEditAsync" 
+            IsEditable="IsEditable"/>            
+    }
 
-            <RowTemplate>
-                <MudTd DataLabel="Image">
-                    <RecipeImage Width="150" Height="150" RecipeId="@context.Id" />
-                </MudTd>
-                <MudTd DataLabel="Title">@context.Title</MudTd>
-                <MudTd DataLabel="Description">@context.Description</MudTd>
-                <MudTd DataLabel="Instructions">@context.Instructions</MudTd>
-                <MudTd DataLabel="Ingredients"><RecipeIngredients IsEditable="false" Recipe="@context" /></MudTd>
-                <MudTd DataLabel="Actions">
-                    <span @onclick:stopPropagation="true">
-                        <MudIconButton Icon="@Icons.Material.Filled.Edit"
-                                       Color="Color.Warning"
-                                       Size="Size.Small"
-                                       OnClick="@(async _ => await HandleEdit(context))"
-                                       aria-label="Edit recipe" />
-                    </span>
-                    <span @onclick:stopPropagation="true">
-                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
-                                       Color="Color.Error"
-                                       Size="Size.Small"
-                                       OnClick="@(async _ => await DeleteRecipeAsync(context))"
-                                       aria-label="Delete recipe" />
-                    </span>
-                </MudTd>
-            </RowTemplate>
-        </MudTable>
     </MudCollapse>
 </MudPaper>
-
-@code {
-    private bool _isExpanded = true;
-
-    private void ToggleExpanded()
-    {
-        _isExpanded = !_isExpanded;
-    }
-}

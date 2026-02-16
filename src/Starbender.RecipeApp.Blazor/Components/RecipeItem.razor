@@ -1,0 +1,37 @@
+﻿@inherits RecipeComponentBase
+
+<MudPaper Elevation="10" Outlined="true" onclick=@(async () => await OnClick.InvokeAsync(Recipe)) Class="ma-2">
+    <MudStack Class="ma-0 gap-0 w-100">
+        <MudStack Row Class="ma-0 gap-0 w-100">
+            <MudText Typo="@Typo.h5" Class="w-100 text-wrap">@Recipe.Title</MudText>
+            <MudSpacer />
+            <MudTooltip Delay="300" Text="Delete the recipe">
+                <span @onclick:stopPropagation="true">
+                    <MudIconButton Icon="@Icons.Material.Filled.Close"
+                                Color="Color.Error"
+                                Size="Size.Small"
+                                OnClick="@(async () => await OnDelete.InvokeAsync(Recipe))"
+                                aria-label="Delete recipe" />
+                </span>
+            </MudTooltip>
+        </MudStack>
+        <MudStack Row Class="ma-0 gap-0 w-100">
+            <RecipeImage Width="150" Height="150" RecipeId="@Recipe.Id" />
+            <MudStack Class="pa-0 gap-0 w-100" Style="min-width:0;">
+                <MudStack Row Class="ma-0 gap-0 w-100">
+                    <MudText Typo="@Typo.subtitle2" Class="w-100 text-wrap">@Recipe.Description</MudText>
+                    
+                </MudStack>
+
+                <RecipeIngredients IsEditable="false" Recipe="@Recipe" />
+            </MudStack>
+        </MudStack>
+    </MudStack>
+</MudPaper>
+
+@code {
+    [Parameter] public bool IsEditable { get; set; } = true;
+    [Parameter] public RecipeDto Recipe { get; set; }
+    [Parameter] public EventCallback<RecipeDto> OnDelete { get; set; }
+    [Parameter] public EventCallback<RecipeDto> OnClick { get; set; }
+}

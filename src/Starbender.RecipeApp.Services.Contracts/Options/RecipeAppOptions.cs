@@ -8,4 +8,5 @@ public class RecipeAppOptions
     public BlobStoreType ImageStoreType {  get; set; }
     public string ImageContainerId { get; set; } = string.Empty;
     public bool EnableAuthentication { get; set; }
+    public bool EnableSeeding { get; set; }
 }
