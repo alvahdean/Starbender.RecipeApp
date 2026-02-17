@@ -7,6 +7,9 @@
 **/.settings
 **/.toolstarget
 **/.vs
+**/.vs/**
+.vs
+.vs/**
 **/.vscode
 **/*.*proj.user
 **/*.dbmdl
