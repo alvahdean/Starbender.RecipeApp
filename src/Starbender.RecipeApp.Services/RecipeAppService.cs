@@ -88,9 +88,18 @@ public class RecipeAppService : CrudAppService<Recipe, RecipeDto>, IRecipeAppSer
         
         var blobId = recipe.ImageBlobId;
 
-        var result = !string.IsNullOrWhiteSpace(blobId)
-            ? await container.GetContentAsync(blobId, ct)
-            : null;
+        BlobContentDto? result = null;
+
+        if (!string.IsNullOrWhiteSpace(blobId))
+        {
+            try
+            {
+                result = await container.GetContentAsync(blobId, ct);
+            } catch
+            {
+                Logger.LogWarning("ImageBlob not found in container, returning null");
+            }
+        }
 
         return result;
     }

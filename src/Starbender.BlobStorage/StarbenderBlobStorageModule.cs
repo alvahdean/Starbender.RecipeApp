@@ -58,6 +58,9 @@ public class StarbenderBlobStorageModule : ModuleBase
                 case BlobStoreType.Filesystem:
                     services.AddTransient<IBlobContainer>(sp => new FilesystemContainerProvider(sp, containerOptions));
                     break;
+                case BlobStoreType.Azure:
+                    services.AddTransient<IBlobContainer>(sp => new AzureBlobContainerProvider(sp, containerOptions));
+                    break;
 
                 case BlobStoreType.Unspecified:
                 default:
@@ -72,11 +75,32 @@ public class StarbenderBlobStorageModule : ModuleBase
     private static bool ValidateBlobContainerOptions(BlobContainerOptions options)
     {
         var storeTypeOk = options.StoreType != BlobStoreType.Unspecified;
-        var paramsOk = options.StoreType == BlobStoreType.Filesystem
-                && options.Parameters.ContainsKey("RootPath")
-                && !string.IsNullOrWhiteSpace(options.Parameters["RootPath"])
-                && (!options.Parameters.ContainsKey("ReadOnly")
-                    || bool.TryParse(options.Parameters["ReadOnly"], out bool _));
+        var readOnlyOk = !options.Parameters.ContainsKey("ReadOnly")
+            || bool.TryParse(options.Parameters["ReadOnly"], out _);
+
+        var filesystemParamsOk = options.StoreType == BlobStoreType.Filesystem
+            && options.Parameters.ContainsKey(FilesystemContainerProvider.RootPathKey)
+            && !string.IsNullOrWhiteSpace(options.Parameters[FilesystemContainerProvider.RootPathKey]);
+
+        var azureConnectionOk = options.Parameters.TryGetValue(AzureBlobContainerProvider.ConnectionStringKey, out var connectionString)
+            && !string.IsNullOrWhiteSpace(connectionString);
+
+        var azureServiceUriOk = options.Parameters.TryGetValue(AzureBlobContainerProvider.ServiceUriKey, out var serviceUri)
+            && !string.IsNullOrWhiteSpace(serviceUri);
+
+        var azureCreateIfNotExistsOk = !options.Parameters.ContainsKey(AzureBlobContainerProvider.CreateIfNotExistsKey)
+            || bool.TryParse(options.Parameters[AzureBlobContainerProvider.CreateIfNotExistsKey], out _);
+
+        var azureContainerNameOk = options.Parameters.TryGetValue(AzureBlobContainerProvider.ContainerNameKey, out var containerName)
+            ? !string.IsNullOrWhiteSpace(containerName)
+            : !string.IsNullOrWhiteSpace(options.ContainerId);
+
+        var azureParamsOk = options.StoreType == BlobStoreType.Azure
+            && (azureConnectionOk || azureServiceUriOk)
+            && azureCreateIfNotExistsOk
+            && azureContainerNameOk;
+
+        var paramsOk = (filesystemParamsOk || azureParamsOk) && readOnlyOk;
 
         return storeTypeOk && paramsOk;
     }

@@ -353,3 +353,9 @@ MigrationBackup/
 *.db-shm
 
 *.db-wal
+**/appsettings.Production.json
+**/appsettings.Development.json
+
+CON
+
+src/Starbender.RecipeApp/appsettings.DevDocker.json
