@@ -31,7 +31,7 @@ public interface IBlobContainer
     /// </summary>
     /// <param name="blobId">The ID of the blob to return</param>
     /// <returns>The byte contents of the blob</returns>
-    Task<BlobContentDto> GetContentAsync(string blobId, CancellationToken ct);
+    Task<BlobContentDto?> GetContentAsync(string blobId, CancellationToken ct);
 
     /// <summary>
     /// Creates a new blob entry and returns the ID of the entry for later retrieval
