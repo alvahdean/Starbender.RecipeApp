@@ -61,11 +61,6 @@ public partial class RecipeTable : RecipeComponentBase
 
         var dialog = await DialogService.ShowAsync<RecipeEditorDialog>("Edit Recipe", parameters, options);
         var result = await dialog.Result;
-
-        //if (!(result?.Canceled ?? true))
-        //{
-        //    StateHasChanged();
-        //}
     }
 
     private async Task HandleRecipeDeleteAsync(RecipeDto recipe)
