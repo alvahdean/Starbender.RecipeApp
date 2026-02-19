@@ -1,24 +1,20 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Starbender.BlobStorage.Contracts;
-using Starbender.BlobStorage.Options;
 
 namespace Starbender.BlobStorage.Services;
 
 public class BlobContainerFactory : IBlobContainerFactory
 {
-    private readonly BlobStoreOptions _options = new();
     private readonly List<IBlobContainer> _containers = new();
     private readonly ILoggerFactory _logFactory = null!;
     private readonly ILogger _logger = null!;
 
     public BlobContainerFactory(
-        IOptions<BlobStoreOptions> options,
         IEnumerable<IBlobContainer> containers,
         ILoggerFactory logFactory)
     {
         _containers = containers.ToList();
-        _options = options.Value;
         _logFactory = logFactory;
         _logger = _logFactory.CreateLogger<BlobContainerFactory>();
     }
@@ -44,11 +40,10 @@ public class BlobContainerFactory : IBlobContainerFactory
         return result;
     }
 
-    public IBlobContainer? GetContainer(BlobStoreType storeType, string containerId)
+    public IBlobContainer? GetContainer(string containerId)
     {
         var result = _containers
-            .Where(t => t.StoreType == storeType && t.ContainerId == containerId)
-            .FirstOrDefault();
+            .FirstOrDefault(t => t.ContainerId == containerId);
 
         return result;
     }

@@ -29,6 +29,8 @@ namespace Starbender.RecipeApp
                 builder.Configuration.AddAzureKeyVault(new Uri(vaultUri), new DefaultAzureCredential());
             }
 
+            builder.Services.AddHttpClient();
+
             // Add services to the container.
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents();
@@ -94,7 +96,9 @@ namespace Starbender.RecipeApp
 
             var connectionString = builder.Configuration.GetConnectionString("Default")
                 ?? throw new InvalidOperationException("Connection string 'Default' not found.");
+            
             var sqlServerSection = builder.Configuration.GetSection("Database:SqlServer");
+            
             var commandTimeoutSeconds = sqlServerSection.GetValue<int?>("CommandTimeoutSeconds") ?? 180;
             var maxRetryCount = sqlServerSection.GetValue<int?>("MaxRetryCount") ?? 10;
             var maxRetryDelaySeconds = sqlServerSection.GetValue<int?>("MaxRetryDelaySeconds") ?? 30;

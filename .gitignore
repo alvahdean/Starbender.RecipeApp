@@ -361,3 +361,6 @@ CON
 src/Starbender.RecipeApp/appsettings.DevDocker.json
 
 deploy.ps1
+/src/Starbender.RecipeApp/appsettings.Production.json
+/src/Starbender.RecipeApp/appsettings.DockerDev.json
+/src/Starbender.RecipeApp/appsettings.Production.json

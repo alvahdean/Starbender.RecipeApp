@@ -4,7 +4,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Starbender.BlobStorage.Contracts;
 using Starbender.BlobStorage.Entities;
-using Starbender.BlobStorage.Options;
 using Starbender.Core;
 
 namespace Starbender.BlobStorage.Services;
@@ -71,32 +70,23 @@ public abstract class BlobStorageProviderBase : IBlobContainer
         return result;
     }
 
-    public virtual async Task<BlobMetadataDto> CreateContentAsync(BlobContentCreateDto content, CancellationToken ct = default)
+    public virtual async Task<BlobContentDto> CreateContentAsync(BlobContentDto content, CancellationToken ct = default)
     {
         if (IsReadOnly)
         {
             throw new Exception("Blob container is read only");
         }
 
-        var data = content.Content;
+        content.BlobId = await ProviderCreateContentAsync(content.Content, ct);
+        content.Size = (ulong)content.Content.Length;
+        content.StoreType = StoreType;
+        content.ContainerId = ContainerId;
+        content.Checksum = 0;
 
-        var blobId = await ProviderCreateContentAsync(data, ct);
-
-        var metadata = await _metadataRepo.CreateAsync(new BlobMetadata()
-        {
-            BlobId = blobId,
-            StoreType = StoreType,
-            ContainerId = ContainerId,
-            Size = (ulong)data.Length,
-            Checksum = 0
-        }, ct);
-
-        var result = _mapper.Map<BlobMetadataDto>(metadata);
-
-        return result;
+        return content;
     }
 
-    public virtual async Task<BlobMetadataDto> UpdateContentAsync(BlobContentUpdateDto content, CancellationToken ct = default)
+    public virtual async Task<BlobContentDto> UpdateContentAsync(BlobContentDto content, CancellationToken ct = default)
     {
         if (IsReadOnly)
         {
@@ -119,7 +109,9 @@ public abstract class BlobStorageProviderBase : IBlobContainer
 
         metadata = await _metadataRepo.UpdateAsync(metadata, ct);
 
-        var result = _mapper.Map<BlobMetadataDto>(metadata);
+        var result = _mapper.Map<BlobContentDto>(metadata);
+
+        result.Content = data;
 
         return result;
     }

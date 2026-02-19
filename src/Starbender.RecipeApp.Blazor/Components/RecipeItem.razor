@@ -1,6 +1,8 @@
 ﻿@inherits RecipeComponentBase
 
-<MudPaper Elevation="10" Outlined="true" onclick=@(async () => await OnClick.InvokeAsync(Recipe)) Class="ma-2">
+<MudPaper 
+    Elevation="10" Outlined="true" Class="ma-2"
+    onclick=@(async () => await OnClick.InvokeAsync(Recipe))>
     <MudStack Class="ma-0 gap-0 w-100">
         <MudStack Row Class="ma-0 gap-0 w-100">
             <MudText Typo="@Typo.h5" Class="w-100 text-wrap">@Recipe.Title</MudText>
@@ -16,7 +18,7 @@
             </MudTooltip>
         </MudStack>
         <MudStack Row Class="ma-0 gap-0 w-100">
-            <RecipeImage Width="150" Height="150" RecipeId="@Recipe.Id" />
+            <RecipeImage Width="150" Height="150" RecipeId="@Recipe.Id" RefreshToken="@ImageRefreshToken" />
             <MudStack Class="pa-0 gap-0 w-100" Style="min-width:0;">
                 <MudStack Row Class="ma-0 gap-0 w-100">
                     <MudText Typo="@Typo.subtitle2" Class="w-100 text-wrap">@Recipe.Description</MudText>
@@ -32,6 +34,9 @@
 @code {
     [Parameter] public bool IsEditable { get; set; } = true;
     [Parameter] public RecipeDto Recipe { get; set; }
+    [Parameter] public int ImageRefreshToken { get; set; }
     [Parameter] public EventCallback<RecipeDto> OnDelete { get; set; }
     [Parameter] public EventCallback<RecipeDto> OnClick { get; set; }
+
+
 }

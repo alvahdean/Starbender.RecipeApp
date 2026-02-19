@@ -1,0 +1,13 @@
+﻿@page "/recipes"
+
+@using Starbender.RecipeApp.Services.Contracts
+@using Starbender.RecipeApp.Services.Contracts.Dtos
+@using Starbender.RecipeApp.Blazor.Components
+
+@inject IRecipeAppService RecipeService
+@inject NavigationManager NavigationManager
+
+<MudContainer Class="p-2 w-100">
+    <RecipeTable />
+</MudContainer>
+
