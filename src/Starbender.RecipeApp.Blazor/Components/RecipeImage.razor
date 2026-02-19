@@ -1,7 +1,13 @@
 @using Microsoft.AspNetCore.Components.Forms
 @using Starbender.BlobStorage.Contracts
+@using SixLabors.ImageSharp
+@using SixLabors.ImageSharp.Processing
+@using SixLabors.ImageSharp.Formats.Png
+
 @inject IRecipeAppService RecipeService
+
 @inherits RecipeComponentBase
+
 @implements IDisposable
 
 <MudPaper
@@ -44,6 +50,7 @@
     [Parameter] public int RecipeId { get; set; } = default!;
     [Parameter] public int Width { get; set; } = 250;
     [Parameter] public int Height { get; set; } = 250;
+    [Parameter] public int RefreshToken { get; set; }
     [Parameter] public string? Alt { get; set; }
     [Parameter] public bool IsEditable { get; set; }
     [Parameter] public EventCallback<string> BlobIdChanged { get; set; }
@@ -51,6 +58,7 @@
     private bool _isBusy;
     private string? _imageDataUrl;
     private int? _loadedRecipeId;
+    private int? _loadedRefreshToken;
     private readonly CancellationTokenSource _componentCts = new();
 
     private string WidthPx => $"{Width}px";
@@ -62,10 +70,11 @@
         {
             _imageDataUrl = null;
             _loadedRecipeId = null;
+            _loadedRefreshToken = null;
             return;
         }
 
-        if (_loadedRecipeId == RecipeId)
+        if (_loadedRecipeId == RecipeId && _loadedRefreshToken == RefreshToken)
         {
             return;
         }
@@ -95,6 +104,7 @@
             }
 
             _loadedRecipeId = RecipeId;
+            _loadedRefreshToken = RefreshToken;
         }
         catch (OperationCanceledException) when (_componentCts.IsCancellationRequested)
         {
@@ -127,9 +137,9 @@
         }
     }
 
-    private async Task<BlobMetadataDto> Upload(IBrowserFile file)
+    private async Task<BlobContentDto> Upload(IBrowserFile file)
     {
-        BlobMetadataDto result;
+        BlobContentDto result;
         try
         {
             _isBusy = true;
@@ -139,9 +149,13 @@
             await stream.CopyToAsync(ms, _componentCts.Token);
             var originalBytes = ms.ToArray();
 
-            result = await RecipeService.SetRecipeImage(RecipeId, originalBytes, _componentCts.Token);
-            _imageDataUrl = $"data:{file.ContentType};base64,{Convert.ToBase64String(originalBytes)}";
+            // TODO: make target size configureable
+            var resized = ResizePng(originalBytes, 250, 250);
+
+            result = await RecipeService.SetRecipeImageAsync(RecipeId, resized, _componentCts.Token);
+            _imageDataUrl = $"data:{file.ContentType};base64,{Convert.ToBase64String(resized)}";
             _loadedRecipeId = RecipeId;
+            _loadedRefreshToken = RefreshToken;
 
             if (!string.IsNullOrWhiteSpace(result.BlobId))
             {
@@ -166,4 +180,18 @@
         _componentCts.Cancel();
         _componentCts.Dispose();
     }
+
+
+
+public static byte[] ResizePng(byte[] inputBytes, int width, int height)
+{
+    using var image = Image.Load(inputBytes);
+
+    image.Mutate(x => x.Resize(width, height));
+
+    using var ms = new MemoryStream();
+    image.Save(ms, new PngEncoder());
+    return ms.ToArray();
+}
+
 }

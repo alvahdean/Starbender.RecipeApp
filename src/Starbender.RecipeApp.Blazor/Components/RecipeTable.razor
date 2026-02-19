@@ -12,7 +12,7 @@
                 <SeedButton />
             }
 
-            <CreateRecipeButton HandleDialogSavedAsync="HandleDialogSavedAsync" />
+            <CreateRecipeButton HandleDialogSavedAsync="HandleRecipeUpdatedAsync" />
             
             @if(CanCollapse)
             {
@@ -36,13 +36,14 @@
                       Immediate="true"
                       @bind-Value="_searchTerm" />
 
-    @foreach(var recipe in FilteredRecipes)
-    {
-        <RecipeItem Recipe="@recipe" 
-            OnDelete="HandleDeleteAsync" 
-            OnClick="HandleEditAsync" 
-            IsEditable="IsEditable"/>            
-    }
+        @foreach(var recipe in FilteredRecipes)
+        {
+            <RecipeItem Recipe="@recipe" 
+                ImageRefreshToken="@GetImageRefreshToken(recipe.Id)"
+                OnDelete="HandleRecipeDeleteAsync" 
+                OnClick="OpenEditorAsync" 
+                IsEditable="IsEditable"/>            
+        }
 
     </MudCollapse>
 </MudPaper>

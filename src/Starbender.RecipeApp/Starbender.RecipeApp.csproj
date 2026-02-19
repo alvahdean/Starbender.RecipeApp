@@ -16,6 +16,7 @@
 	<ItemGroup>
     <PackageReference Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.4.0" />
     <PackageReference Include="Azure.Identity" Version="1.14.2" />
+    <PackageReference Include="Markdig" Version="0.45.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="10.0.2" />
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="10.0.2" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.2" />
@@ -30,6 +31,12 @@
     <ProjectReference Include="..\Starbender.RecipeApp.EntityFrameworkCore\Starbender.RecipeApp.EntityFrameworkCore.csproj" />
     <ProjectReference Include="..\Starbender.RecipeApp.Services.Contracts\Starbender.RecipeApp.Services.Contracts.csproj" />
     <ProjectReference Include="..\Starbender.RecipeApp.Services\Starbender.RecipeApp.Services.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="wwwroot\README.md">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>

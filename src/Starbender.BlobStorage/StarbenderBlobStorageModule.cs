@@ -1,7 +1,8 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 using Starbender.BlobStorage.Contracts;
-using Starbender.BlobStorage.Options;
 using Starbender.BlobStorage.Services;
 using Starbender.Core;
 using Starbender.Core.Extensions;
@@ -33,25 +34,35 @@ public class StarbenderBlobStorageModule : ModuleBase
         var serviceProvider = services.BuildServiceProvider();
         var configuration = serviceProvider.GetRequiredService<IConfiguration>();
 
-        services.AddOptions<BlobStoreOptions>()
-                .Bind(configuration.GetSection(BlobStoreOptions.DefaultConfigurationKey))
-                .Validate(ValidateBlobStoreOptions, "Invalid BlobStoreOptions")
-                .ValidateOnStart();
+        BlobStoreOptions options= new();
+
+        configuration.GetSection(BlobStoreOptions.DefaultConfigurationKey).Bind(options);
+
+        foreach (var opt in options.Containers)
+        {
+            if (string.IsNullOrWhiteSpace(opt.Value.ContainerId))
+            {
+                opt.Value.ContainerId = opt.Key;
+            }
+
+            if (!ValidateBlobContainerOptions(opt.Value))
+            {
+                throw new Exception($"{nameof(BlobStoreOptions)}.Container[{opt.Key}] is invalid");
+            }
+        }
+
+        services.AddSingleton(options);
+        services.AddSingleton(Options.Create(options));
     }
 
     public void ConfigureContainers(IServiceCollection services)
     {
         var serviceProvider = services.BuildServiceProvider();
-        var configuration = serviceProvider.GetRequiredService<IConfiguration>();
-
-        var options = new BlobStoreOptions();
-
-        configuration.GetSection(BlobStoreOptions.DefaultConfigurationKey)
-            .Bind(options);
+        var options = serviceProvider.GetRequiredService<IOptions<BlobStoreOptions>>().Value;
 
         services.AddTransient<IBlobContainerFactory, BlobContainerFactory>();
 
-        foreach (var containerOptions in options.Containers)
+        foreach (var containerOptions in options.Containers.Values)
         {
             switch (containerOptions.StoreType)
             {
@@ -68,9 +79,6 @@ public class StarbenderBlobStorageModule : ModuleBase
             }
         }
     }
-
-    private static bool ValidateBlobStoreOptions(BlobStoreOptions options) =>
-        options.Containers.All(ValidateBlobContainerOptions);
 
     private static bool ValidateBlobContainerOptions(BlobContainerOptions options)
     {

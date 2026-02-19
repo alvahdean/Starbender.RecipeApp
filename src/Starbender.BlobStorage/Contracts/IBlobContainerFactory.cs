@@ -20,8 +20,8 @@ public interface IBlobContainerFactory
     IBlobContainer? GetDefaultContainer(BlobStoreType storeType);
 
     /// <summary>
-    /// Gets the container for the specified store type and containerId
+    /// Gets the container for the specified containerId
     /// </summary>
     /// <param name="storeType"></param>
-    IBlobContainer? GetContainer(BlobStoreType storeType, string containerId);
+    IBlobContainer? GetContainer(string containerId);
 }

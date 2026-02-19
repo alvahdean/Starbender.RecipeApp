@@ -1,5 +1,4 @@
 ﻿@using Microsoft.Extensions.Options
-@using Starbender.RecipeApp.Services.Contracts.Options
 @implements IDisposable
 
 @inject NavigationManager NavigationManager
@@ -18,6 +17,12 @@
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
                 <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="/recipes" Match="NavLinkMatch.All">
+                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Recipes
             </NavLink>
         </div>
 
