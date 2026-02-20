@@ -37,7 +37,6 @@ jobs:
           appSourcePath: ${{ github.workspace }}/src/Starbender.RecipeApp
           dockerfilePath: Dockerfile
           acrName: sbdev
-          registryUrl: sbdev.azurecr.io
           containerAppName: recipeapp
           resourceGroup: Dev
           imageToBuild: sbdev.azurecr.io/recipeapp:${{ github.sha }}
