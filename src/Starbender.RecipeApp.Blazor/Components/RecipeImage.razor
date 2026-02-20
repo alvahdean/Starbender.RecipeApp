@@ -1,4 +1,5 @@
 @using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.Extensions.Options
 @using Starbender.BlobStorage.Contracts
 @using SixLabors.ImageSharp
 @using SixLabors.ImageSharp.Processing
@@ -23,16 +24,13 @@
             <MudProgressCircular Indeterminate="true" />
         </div>
     }
-
-    @if (!string.IsNullOrWhiteSpace(_imageDataUrl))
+    else if (HasContent)
     {
         <MudImage Width="@Width" Height="@Height" Src="@_imageDataUrl" Alt="@Alt" Style=@($"width:{WidthPx}; height:{HeightPx}; object-fit:contain;") />
     }
     else
     {
-        <div style="display:flex;align-items:center;justify-content:center;">
-            <MudText Typo="Typo.body2">@(IsEditable ? "Drop an image or click to upload" : "No Image")</MudText>
-        </div>
+        <MudText Align="Align.Center" Typo="Typo.body2">@(IsEditable ? "Drop an image or click to upload" : "No Image")</MudText>
     }
 
     @if (IsEditable)
@@ -47,73 +45,56 @@
 </MudPaper>
 
 @code {
-    [Parameter] public int RecipeId { get; set; } = default!;
-    [Parameter] public int Width { get; set; } = 250;
-    [Parameter] public int Height { get; set; } = 250;
-    [Parameter] public int RefreshToken { get; set; }
+    // Note: Image content is always assumed to be "image/png"
+    public const string ContentType = "image/png";
+    public const int MaxFileSize = 10 * 1024 * 1024;
+
+    [Inject] IOptions<RecipeAppOptions> Options { get; init; } = null!;
+    [Inject] IBlobContainerFactory ContainerFactory { get; init; } = null!;
+
+    [Parameter] public BlobContentDto BlobContent { get; set; } = new();
+    [Parameter] public EventCallback<BlobContentDto> BlobContentChanged { get; set; }
+
+    [Parameter] public int Width { get; set; } = 150;
+    [Parameter] public int Height { get; set; } = 150;
     [Parameter] public string? Alt { get; set; }
     [Parameter] public bool IsEditable { get; set; }
-    [Parameter] public EventCallback<string> BlobIdChanged { get; set; }
 
     private bool _isBusy;
     private string? _imageDataUrl;
-    private int? _loadedRecipeId;
-    private int? _loadedRefreshToken;
     private readonly CancellationTokenSource _componentCts = new();
+    private IBlobContainer? _container = null;
+    private BlobContentDto _image = new();
+    private RecipeAppOptions _options = new();
 
     private string WidthPx => $"{Width}px";
     private string HeightPx => $"{Height}px";
+    private bool HasContent => _image.Content.Length > 0 && !string.IsNullOrWhiteSpace(_imageDataUrl);
+
+    protected override Task OnInitializedAsync()
+    {
+        _options = Options.Value;
+        _container = ContainerFactory.GetContainer(_options.ImageContainerId)
+            ?? throw new Exception($"No Recipe Image container found. ({_options.ImageStoreType}.{_options.ImageContainerId})");
+
+        return base.OnInitializedAsync();
+    }
 
     protected override async Task OnParametersSetAsync()
     {
-        if (RecipeId <= 0)
-        {
-            _imageDataUrl = null;
-            _loadedRecipeId = null;
-            _loadedRefreshToken = null;
-            return;
-        }
-
-        if (_loadedRecipeId == RecipeId && _loadedRefreshToken == RefreshToken)
-        {
-            return;
-        }
-
-        await LoadFromServerIfAny();
-    }
-
-    private async Task LoadFromServerIfAny()
-    {
-        if (_isBusy || _componentCts.IsCancellationRequested)
-        {
-            return;
-        }
-
-        try
-        {
-            _isBusy = true;
-            var dto = await RecipeService.GetRecipeImageAsync(RecipeId, _componentCts.Token);
-
-            if (dto?.Size > 0)
+        _image = new BlobContentDto()
             {
-                _imageDataUrl = $"data:{dto.ContentType};base64,{Convert.ToBase64String(dto.Content)}";
-            }
-            else
-            {
-                _imageDataUrl = null;
-            }
+            Id = BlobContent.Id,
+            BlobId = BlobContent.BlobId,
+            Checksum = BlobContent.Checksum,
+            ContainerId = BlobContent.ContainerId,
+            Content = BlobContent.Content.ToArray(),
+            ContentType = BlobContent.ContentType,
+            Size = BlobContent.Size,
+            StoreType = BlobContent.StoreType
+            };
 
-            _loadedRecipeId = RecipeId;
-            _loadedRefreshToken = RefreshToken;
-        }
-        catch (OperationCanceledException) when (_componentCts.IsCancellationRequested)
-        {
-            // Ignore cancellation during disposal/navigation.
-        }
-        finally
-        {
-            _isBusy = false;
-        }
+        _imageDataUrl = $"data:{_image.ContentType};base64,{Convert.ToBase64String(_image.Content)}";
     }
 
     private async Task OnPickFile(InputFileChangeEventArgs e)
@@ -125,7 +106,8 @@
 
         try
         {
-            await Upload(e.File);
+            _isBusy = true;
+            await UpdateContent(e.File);
         }
         catch (OperationCanceledException) when (_componentCts.IsCancellationRequested)
         {
@@ -133,41 +115,41 @@
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Image save failed: {ex.Message}", Severity.Error);
-        }
-    }
-
-    private async Task<BlobContentDto> Upload(IBrowserFile file)
-    {
-        BlobContentDto result;
-        try
-        {
-            _isBusy = true;
-
-            using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024, _componentCts.Token);
-            using var ms = new MemoryStream();
-            await stream.CopyToAsync(ms, _componentCts.Token);
-            var originalBytes = ms.ToArray();
-
-            // TODO: make target size configureable
-            var resized = ResizePng(originalBytes, 250, 250);
-
-            result = await RecipeService.SetRecipeImageAsync(RecipeId, resized, _componentCts.Token);
-            _imageDataUrl = $"data:{file.ContentType};base64,{Convert.ToBase64String(resized)}";
-            _loadedRecipeId = RecipeId;
-            _loadedRefreshToken = RefreshToken;
-
-            if (!string.IsNullOrWhiteSpace(result.BlobId))
-            {
-                await BlobIdChanged.InvokeAsync(result.BlobId);
-            }
+            Snackbar.Add($"Image update failed: {ex.Message}", Severity.Error);
         }
         finally
         {
             _isBusy = false;
         }
+    }
 
-        return result;
+    private async Task UpdateContent(IBrowserFile file)
+    {
+        if (_container == null)
+        {
+            throw new Exception("No image store available");
+        }
+
+        using var stream = file.OpenReadStream(maxAllowedSize: MaxFileSize, _componentCts.Token);
+
+        using var ms = new MemoryStream();
+
+        await stream.CopyToAsync(ms);
+
+        var fileBytes = ms.ToArray();
+        var pngBytes = ResizePng(fileBytes, Width, Height);
+
+
+        if (string.IsNullOrWhiteSpace(_image.BlobId))
+        {
+            _image = await _container.CreateContentAsync(pngBytes, ContentType, _componentCts.Token);
+        }
+        else
+        {
+            _image = await _container.UpdateContentAsync(_image.BlobId, pngBytes, ContentType, _componentCts.Token);
+        }
+
+        await BlobContentChanged.InvokeAsync(_image);
     }
 
     public void Dispose()
@@ -181,17 +163,14 @@
         _componentCts.Dispose();
     }
 
+    private byte[] ResizePng(byte[] inputBytes, int width, int height)
+    {
+        using var image = Image.Load(inputBytes);
+        image.Mutate(x => x.Resize(width, height));
 
+        using var ms = new MemoryStream();
+        image.Save(ms, new PngEncoder());
 
-public static byte[] ResizePng(byte[] inputBytes, int width, int height)
-{
-    using var image = Image.Load(inputBytes);
-
-    image.Mutate(x => x.Resize(width, height));
-
-    using var ms = new MemoryStream();
-    image.Save(ms, new PngEncoder());
-    return ms.ToArray();
-}
-
+        return ms.ToArray();
+    }
 }

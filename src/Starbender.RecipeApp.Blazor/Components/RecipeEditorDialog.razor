@@ -1,4 +1,5 @@
 @using AutoMapper
+@using Starbender.BlobStorage.Contracts
 @inherits RecipeComponentBase
 
 <MudDialog>
@@ -10,8 +11,8 @@
                         IsEditable="true"
                         Width="150"
                         Height="150"
-                        RecipeId="@_recipeModel.Id"
-                        BlobIdChanged="HandleBlobIdChangedAsync" />
+                        BlobContent="@(_recipeModel.Image)"
+                        BlobContentChanged="HandleBlobChangedAsync"/>
 
                     <MudStack Style="width: 100%;">
                         <MudTextField
@@ -40,8 +41,7 @@
                 </MudStack>
 
                 <RecipeIngredients
-                    Recipe="_recipeModel"
-                    RecipeChanged="HandleIngredientsChangedAsync"
+                    @bind-Ingredients=@(_recipeModel.RecipeIngredients)
                     IsEditable="true" />
 
                 <MudTextField
@@ -65,24 +65,23 @@
 </MudDialog>
 
 @code {
-    [Inject] private IRecipeAppService RecipeService { get; set; } = null!;
-    [Inject] private IMapper Mapper { get; set; } = null!;
-
     [CascadingParameter]
     private IMudDialogInstance MudDialog { get; set; } = default!;
 
     [Parameter]
-    public RecipeDto Model { get; set; } = new();
+    public FullRecipeDto Model { get; set; } = new();
 
     [Parameter]
-    public EventCallback<RecipeDto> OnSaved { get; set; }
+    public EventCallback<FullRecipeDto> OnSaved { get; set; }
 
     private MudForm? _form;
-    private RecipeDto _recipeModel = new();
+    private FullRecipeDto _recipeModel = new();
 
     protected override void OnParametersSet()
     {
-        _recipeModel = Model != null ? Mapper.Map<RecipeDto>(Model) : new();
+        _recipeModel = Model != null ? Mapper.Map<FullRecipeDto>(Model) : new();
+
+        base.OnParametersSet();
     }
 
     private async Task HandleSaveAsync()
@@ -93,35 +92,17 @@
         }
 
         await _form.Validate();
+
         if (_form.IsValid != true)
         {
             return;
         }
 
         Mapper.Map(_recipeModel, Model);
-        // Model.Id = _recipeModel.Id;
-        // Model.Title = _recipeModel.Title;
-        // Model.Description = _recipeModel.Description;
-        // Model.ImageBlobId = _recipeModel.ImageBlobId;
-        // Model.UserId = _recipeModel.UserId;
-        // Model.IsPublic = _recipeModel.IsPublic;
-        // Model.Instructions = _recipeModel.Instructions;
-        // Model.RecipeIngredients = _recipeModel.RecipeIngredients;
 
-        try
-        {
-            Model = Model.Id == 0
-                ? await RecipeService.CreateAsync(Model)
-                : await RecipeService.UpdateAsync(Model);
+        await OnSaved.InvokeAsync(Model);
 
-            await OnSaved.InvokeAsync(Model);
-            Snackbar.Add("Saved", Severity.Success);
-            MudDialog.Close(DialogResult.Ok(Model));
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add(ex.Message, Severity.Error);
-        }
+        MudDialog.Close();
     }
 
     private Task HandleCancelAsync()
@@ -130,15 +111,11 @@
         return Task.CompletedTask;
     }
 
-    private Task HandleIngredientsChangedAsync(RecipeDto recipe)
+    private Task HandleBlobChangedAsync(BlobContentDto blob)
     {
-        _recipeModel.RecipeIngredients = recipe.RecipeIngredients;
-        return Task.CompletedTask;
-    }
+        _recipeModel.ImageBlobId = blob.BlobId;
+        _recipeModel.Image = blob;
 
-    private Task HandleBlobIdChangedAsync(string blobId)
-    {
-        _recipeModel.ImageBlobId = blobId;
         return Task.CompletedTask;
     }
 }

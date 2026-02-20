@@ -26,7 +26,7 @@
     {
         <MudCollapse Expanded="_isExpanded">
             <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1" Class="mt-2">
-                @foreach (var ingredient in Recipe.RecipeIngredients.ToList())
+                @foreach (var ingredient in _ingredients.ToList())
                 {
                     <MudChip T="string"
                     Color="Color.Primary"
@@ -49,7 +49,7 @@
     else
     {
         <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1" Class="mt-2">
-            @foreach (var ingredient in Recipe.RecipeIngredients.ToList())
+            @foreach (var ingredient in _ingredients.ToList())
             {
                 <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined" Size="Size.Small">
                     <MudText Typo="Typo.caption">@ingredient.ToString()</MudText>
@@ -57,16 +57,20 @@
             }
         </MudStack>
     }
+
     </MudPaper>
 
 @code {
     [Inject] private IDialogService DialogService { get; set; } = null!;
 
     [Parameter]
-    public RecipeDto Recipe { get; set; } = new();
+    public ICollection<RecipeIngredientDto> Ingredients { get; set; } = new List<RecipeIngredientDto>();
 
     [Parameter]
-    public EventCallback<RecipeDto> RecipeChanged { get; set; }
+    public EventCallback<ICollection<RecipeIngredientDto>> IngredientsChanged { get; set; }
+
+    [Parameter]
+    public int RecipeId { get; set; }
 
     [Parameter]
     public bool IsEditable { get; set; }
@@ -76,6 +80,15 @@
     private void ToggleExpanded()
     {
         _isExpanded = !_isExpanded;
+    }
+
+    private List<RecipeIngredientDto> _ingredients = new();
+
+    protected override Task OnParametersSetAsync()
+    {
+        _ingredients = Mapper.Map<List<RecipeIngredientDto>>(Ingredients);
+
+        return base.OnParametersSetAsync();
     }
 
     private async Task EditIngredientAsync(RecipeIngredientDto ingredient)
@@ -105,14 +118,14 @@
         target.Ingredient = saved.Ingredient;
         target.Unit = saved.Unit;
 
-        await RecipeChanged.InvokeAsync(Recipe);
+        await IngredientsChanged.InvokeAsync(_ingredients);
         StateHasChanged();
     }
 
     private async Task RemoveIngredientAsync(RecipeIngredientDto ingredient)
     {
-        Recipe.RecipeIngredients.Remove(ingredient);
-        await RecipeChanged.InvokeAsync(Recipe);
+        _ingredients.Remove(ingredient);
+        await IngredientsChanged.InvokeAsync(_ingredients);
         StateHasChanged();
     }
 
@@ -120,7 +133,7 @@
     {
         var newIngredient = new RecipeIngredientDto
         {
-            RecipeId = Recipe.Id,
+            RecipeId = RecipeId,
             Quantity = 1,
             Ingredient = new IngredientDto()
         };
@@ -144,8 +157,8 @@
 
     private async Task HandleNewIngredientSavedAsync(RecipeIngredientDto ingredient)
     {
-        Recipe.RecipeIngredients.Add(ingredient);
-        await RecipeChanged.InvokeAsync(Recipe);
+        _ingredients.Add(ingredient);
+        await IngredientsChanged.InvokeAsync(_ingredients);
         StateHasChanged();
     }
 }

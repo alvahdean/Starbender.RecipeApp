@@ -7,5 +7,5 @@ public class FullRecipeDto : RecipeDto
     /// <summary>
     /// The content for the image blob
     /// </summary>
-    public BlobContentDto? Image { get; set; }
+    public BlobContentDto Image { get; set; } = new BlobContentDto();
 }

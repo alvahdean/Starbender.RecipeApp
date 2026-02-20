@@ -26,7 +26,7 @@ else
 
 @code {
     [Inject] IDialogService DialogService { get; set; } = default!;
-    [Parameter] public EventCallback<RecipeDto> HandleDialogSavedAsync { get; set; }
+    [Parameter] public EventCallback<FullRecipeDto> HandleDialogSavedAsync { get; set; }
     [Parameter] public bool ShowText { get; set; } = false;
     [Parameter] public string Icon { get; set; } = Icons.Material.Outlined.Add;
 
@@ -40,12 +40,12 @@ else
         try
         {
             _isBusy = true;
-            var selectedRecipe = new RecipeDto();
+            var selectedRecipe = new FullRecipeDto();
 
             var parameters = new DialogParameters<RecipeEditorDialog>
         {
             { x => x.Model, selectedRecipe },
-            // { x => x.OnSaved, EventCallback.Factory.Create<RecipeDto>(this, HandleDialogSavedAsync) }
+            { x => x.OnSaved, EventCallback.Factory.Create<FullRecipeDto>(this, HandleDialogSavedAsync) }
         };
 
             var options = new DialogOptions

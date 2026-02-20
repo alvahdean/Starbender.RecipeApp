@@ -36,14 +36,7 @@ public class FilesystemContainerProvider : BlobStorageProviderBase
     {
         var blobId = Guid.NewGuid().ToString();
 
-        var path = Path.Combine(_options.Parameters[RootPathKey], blobId);
-
-        if (File.Exists(path))
-        {
-            throw new Exception($"FIle already exists");
-        }
-
-        return blobId;
+        return await ProviderUpdateContentAsync(blobId,data,ct);
     }
 
     public override async Task<string> ProviderUpdateContentAsync(string blobId, byte[] data, CancellationToken ct = default)

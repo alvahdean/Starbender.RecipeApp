@@ -62,7 +62,7 @@ public abstract class BlobStorageProviderBase : IBlobContainer
 
         var result = _mapper.Map<BlobContentDto>(metadata);
 
-        if(result!=null)
+        if (result != null)
         {
             result.Content = await ProviderGetContentAsync(blobId, ct) ?? Array.Empty<byte>();
         }
@@ -70,48 +70,54 @@ public abstract class BlobStorageProviderBase : IBlobContainer
         return result;
     }
 
-    public virtual async Task<BlobContentDto> CreateContentAsync(BlobContentDto content, CancellationToken ct = default)
+    public virtual async Task<BlobContentDto> CreateContentAsync(byte[] content, string contentType, CancellationToken ct = default)
     {
         if (IsReadOnly)
         {
             throw new Exception("Blob container is read only");
         }
 
-        content.BlobId = await ProviderCreateContentAsync(content.Content, ct);
-        content.Size = (ulong)content.Content.Length;
-        content.StoreType = StoreType;
-        content.ContainerId = ContainerId;
-        content.Checksum = 0;
+        var result = await UpdateContentAsync(string.Empty, content, contentType, ct);
 
-        return content;
+        return result;
     }
 
-    public virtual async Task<BlobContentDto> UpdateContentAsync(BlobContentDto content, CancellationToken ct = default)
+    public virtual async Task<BlobContentDto> UpdateContentAsync(string blobId, byte[] content, string contentType, CancellationToken ct = default)
     {
         if (IsReadOnly)
         {
             throw new Exception("Blob container is read only");
         }
 
-        var blobId = content.BlobId;
-        var data = content.Content;
+        if (string.IsNullOrWhiteSpace(blobId) || blobId == Guid.Empty.ToString())
+        {
+            blobId = Guid.NewGuid().ToString();
+        }
 
         var blobPk = (await Metadata().FirstOrDefaultAsync(t => t.BlobId == blobId, ct))?.Id ?? 0;
 
         // Resolve to the tracked instance if one already exists in the DbContext.
         var metadata = await _metadataRepo.GetAsync(blobPk, ct)
-            ?? throw new Exception($"Blob '{blobId}' not found");
+            ?? await _metadataRepo.CreateAsync(new BlobMetadata()
+            {
+                BlobId = blobId,
+                ContentType = contentType,
+                ContainerId = ContainerId,
+                StoreType = StoreType,
+                Size = (ulong)content.Length,
+                Checksum = 0
+            }, ct);
 
-        metadata.Size = (ulong)data.Length;
+        metadata.Size = (ulong)content.Length;
         metadata.Checksum = 0; // TODO: add checksum
 
-        metadata.BlobId = await ProviderUpdateContentAsync(blobId, data, ct);
+        metadata.BlobId = await ProviderUpdateContentAsync(blobId, content, ct);
 
         metadata = await _metadataRepo.UpdateAsync(metadata, ct);
 
         var result = _mapper.Map<BlobContentDto>(metadata);
 
-        result.Content = data;
+        result.Content = content;
 
         return result;
     }

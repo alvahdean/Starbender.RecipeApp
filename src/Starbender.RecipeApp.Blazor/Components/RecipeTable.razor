@@ -1,3 +1,4 @@
+@using Microsoft.Extensions.Options
 @using Starbender.RecipeApp.Blazor.Components.Button
 
 @inherits RecipeComponentBase
@@ -12,7 +13,7 @@
                 <SeedButton />
             }
 
-            <CreateRecipeButton HandleDialogSavedAsync="HandleRecipeUpdatedAsync" />
+            <CreateRecipeButton HandleDialogSavedAsync="HandleRecipeCreatedAsync" />
             
             @if(CanCollapse)
             {
@@ -36,14 +37,64 @@
                       Immediate="true"
                       @bind-Value="_searchTerm" />
 
-        @foreach(var recipe in FilteredRecipes)
+        @foreach(var recipeId in FilteredRecipeIds)
         {
-            <RecipeItem Recipe="@recipe" 
-                ImageRefreshToken="@GetImageRefreshToken(recipe.Id)"
+            <RecipeItem RecipeId="@recipeId" 
                 OnDelete="HandleRecipeDeleteAsync" 
-                OnClick="OpenEditorAsync" 
                 IsEditable="IsEditable"/>            
         }
 
     </MudCollapse>
 </MudPaper>
+
+@code {
+    [Inject] IRecipeAppService RecipeService { get; set; } = default!;
+    [Inject] IOptions<RecipeAppOptions> Options { get; set; } = default!;
+    [Inject] IDialogService DialogService { get; set; } = default!;
+
+    [Parameter] public bool CanCollapse { get; set; } = false;
+    [Parameter] public bool IsEditable { get; set; } = true;
+
+    private List<RecipeDto> _recipes = new();
+    private readonly Dictionary<int, int> _imageRefresh = new();
+    private string _searchTerm = string.Empty;
+    private RecipeAppOptions _options = new();
+    private bool _isExpanded = true;
+
+    private void ToggleExpanded() =>
+        _isExpanded = !_isExpanded;
+
+    private IEnumerable<RecipeDto> FilteredRecipes =>
+        string.IsNullOrWhiteSpace(_searchTerm)
+            ? _recipes
+            : _recipes.Where(recipe =>
+                (recipe.Title?.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (recipe.Description?.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase) ?? false));
+
+    private List<int> FilteredRecipeIds => 
+        FilteredRecipes.Select(t => t.Id).ToList();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _recipes = (await RecipeService.GetAllAsync()).ToList();
+        _options = Options.Value;
+
+        await base.OnInitializedAsync();
+    }
+
+    private void HandleRecipeDeleteAsync(int recipeId)
+    {
+        var item = _recipes.FirstOrDefault(t => t.Id == recipeId);
+
+        if (item != null)
+        {
+            _recipes.Remove(item);
+        }
+    }
+
+    private async Task HandleRecipeCreatedAsync(RecipeDto newItem)
+    {
+        var savedItem = await RecipeService.CreateAsync(newItem);
+        _recipes.Insert(0,savedItem);
+    }
+}
