@@ -1,42 +1,124 @@
-﻿@inherits RecipeComponentBase
+﻿@using Microsoft.Extensions.Options
+@inherits RecipeComponentBase
 
-<MudPaper 
-    Elevation="10" Outlined="true" Class="ma-2"
-    onclick=@(async () => await OnClick.InvokeAsync(Recipe))>
-    <MudStack Class="ma-0 gap-0 w-100">
-        <MudStack Row Class="ma-0 gap-0 w-100">
-            <MudText Typo="@Typo.h5" Class="w-100 text-wrap">@Recipe.Title</MudText>
-            <MudSpacer />
-            <MudTooltip Delay="300" Text="Delete the recipe">
-                <span @onclick:stopPropagation="true">
-                    <MudIconButton Icon="@Icons.Material.Filled.Close"
-                                Color="Color.Error"
-                                Size="Size.Small"
-                                OnClick="@(async () => await OnDelete.InvokeAsync(Recipe))"
-                                aria-label="Delete recipe" />
-                </span>
-            </MudTooltip>
-        </MudStack>
-        <MudStack Row Class="ma-0 gap-0 w-100">
-            <RecipeImage Width="150" Height="150" RecipeId="@Recipe.Id" RefreshToken="@ImageRefreshToken" />
-            <MudStack Class="pa-0 gap-0 w-100" Style="min-width:0;">
-                <MudStack Row Class="ma-0 gap-0 w-100">
-                    <MudText Typo="@Typo.subtitle2" Class="w-100 text-wrap">@Recipe.Description</MudText>
-                    
+@if (Recipe != null)
+{
+    <MudPaper Elevation="10" Outlined="true" Class="ma-2" onclick=@(async () => await OpenEditorAsync())>
+        <MudStack Class="ma-0 gap-0 w-100">
+            <MudStack Row Class="ma-0 gap-0 w-100">
+                <MudText Typo="@Typo.h5" Class="w-100 text-wrap">@Recipe.Title</MudText>
+                <MudSpacer />
+                <MudTooltip Delay="300" Text="Delete the recipe">
+                    <span @onclick:stopPropagation="true">
+                        <MudIconButton Icon="@Icons.Material.Filled.Close"
+                        Color="Color.Error"
+                        Size="Size.Small"
+                        OnClick="@(async () => await HandleRecipeDeleteAsync())"
+                        aria-label="Delete recipe" />
+                    </span>
+                </MudTooltip>
+            </MudStack>
+            <MudStack Row Class="ma-0 gap-0 w-100">
+                <RecipeImage BlobContent="@Recipe.Image" IsEditable="false"/>
+                <MudStack Class="pa-0 gap-0 w-100" Style="min-width:0;">
+                    <MudStack Row Class="ma-0 gap-0 w-100">
+                        <MudText Typo="@Typo.subtitle2" Class="w-100 text-wrap">@Recipe.Description</MudText>
+
+                    </MudStack>
+
+                    <RecipeIngredients IsEditable="false" @bind-Ingredients="@Recipe.RecipeIngredients" />
                 </MudStack>
-
-                <RecipeIngredients IsEditable="false" Recipe="@Recipe" />
             </MudStack>
         </MudStack>
-    </MudStack>
-</MudPaper>
+    </MudPaper>
+}
 
 @code {
+    [Inject] IRecipeAppService RecipeService { get; set; } = default!;
+    [Inject] IOptions<RecipeAppOptions> Options { get; set; } = default!;
+    [Inject] IDialogService DialogService { get; set; } = default!;
+
     [Parameter] public bool IsEditable { get; set; } = true;
-    [Parameter] public RecipeDto Recipe { get; set; }
-    [Parameter] public int ImageRefreshToken { get; set; }
-    [Parameter] public EventCallback<RecipeDto> OnDelete { get; set; }
-    [Parameter] public EventCallback<RecipeDto> OnClick { get; set; }
+    [Parameter] public int RecipeId { get; set; }
+    [Parameter] public EventCallback<int> OnDelete { get; set; }
 
+    private FullRecipeDto? Recipe { get; set; }
 
+    protected async override Task OnParametersSetAsync()
+    {
+        if (RecipeId > 0)
+        {
+            Recipe = await RecipeService.GetFullAsync(RecipeId, CancellationToken.None);
+        }
+
+        await base.OnInitializedAsync();
+    }
+
+    private async Task OpenEditorAsync()
+    {
+        if (Recipe is null)
+        {
+            return;
+        }
+
+        var updateDto = Mapper.Map<FullRecipeDto>(Recipe);
+
+        var parameters = new DialogParameters<RecipeEditorDialog>
+        {
+            { x => x.Model, updateDto },
+            { x => x.OnSaved, EventCallback.Factory.Create<FullRecipeDto>(this, HandleRecipeUpdatedAsync) }
+        };
+
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true,
+            CloseOnEscapeKey = true
+        };
+
+        var dialog = await DialogService.ShowAsync<RecipeEditorDialog>("Edit Recipe", parameters, options);
+        var result = await dialog.Result;
+    }
+
+    private async Task HandleRecipeDeleteAsync()
+    {
+        if (Recipe == null)
+        {
+            return;
+        }
+
+        var recipeId = Recipe.Id;
+
+        var confirmed = await DialogService.ShowMessageBox(
+            "Confirm",
+            $"Delete '{Recipe.Title}'?",
+            yesText: "Delete",
+            cancelText: "Cancel");
+
+        if (confirmed != true)
+        {
+            return;
+        }
+
+        if (Recipe.Id > 0)
+        {
+            try
+            {
+                await RecipeService.DeleteAsync(Recipe.Id);
+                await OnDelete.InvokeAsync(recipeId);
+            } catch (Exception ex)
+            {
+                Snackbar.Add($"Delete failed: {ex.Message}", Severity.Error);
+            }
+        }
+
+        Recipe = null;
+    }
+
+    private async Task HandleRecipeUpdatedAsync(FullRecipeDto updated)
+    {
+        Mapper.Map(updated, Recipe);
+        Recipe = await RecipeService.UpdateFullAsync(updated, CancellationToken.None);
+        // StateHasChanged();
+    }
 }

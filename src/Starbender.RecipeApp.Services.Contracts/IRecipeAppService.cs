@@ -7,4 +7,6 @@ public interface IRecipeAppService : ICrudAppService<RecipeDto>
 {
     Task<BlobContentDto> SetRecipeImageAsync(int recipeId, byte[] imageBytes, CancellationToken ct);
     Task<BlobContentDto?> GetRecipeImageAsync(int recipeId, CancellationToken ct);
+    Task<FullRecipeDto?> GetFullAsync(int recipeId, CancellationToken ct);
+    Task<FullRecipeDto> UpdateFullAsync(FullRecipeDto updated, CancellationToken ct);
 }

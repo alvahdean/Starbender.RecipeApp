@@ -31,7 +31,7 @@
       "commandName": "Docker",
       "launchBrowser": true,
       "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}",
-      "DockerfileRunArguments": "--network appnet --network-alias recipeapp -v recipeapp-blob:/var/opt/recipes/blob",
+      "DockerfileRunArguments": "--network appnet --network-alias recipeapp -v C:/data/recipes:/data/recipes",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "ASPNETCORE_HTTP_PORTS": "8080",

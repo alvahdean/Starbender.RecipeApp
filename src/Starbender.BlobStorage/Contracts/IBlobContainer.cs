@@ -38,14 +38,14 @@ public interface IBlobContainer
     /// </summary>
     /// <param name="content">The data to store</param>
     /// <returns>An ID for the newly stored blob</returns>
-    Task<BlobContentDto> CreateContentAsync(BlobContentDto content, CancellationToken ct);
+    Task<BlobContentDto> CreateContentAsync(byte[] content, string contentType, CancellationToken ct);
 
     /// <summary>
     /// Updates an existing blob entry contents
     /// </summary>
     /// <param name="blobId">The id of the blob to update</param>
     /// <param name="content">The updated data store</param>
-    Task<BlobContentDto> UpdateContentAsync(BlobContentDto content, CancellationToken ct);
+    Task<BlobContentDto> UpdateContentAsync(string blobId, byte[] content, string contentType, CancellationToken ct);
 
     /// <summary>
     /// Deletes an existing blob with the specified ID

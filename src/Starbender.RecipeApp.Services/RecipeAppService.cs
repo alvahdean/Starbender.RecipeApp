@@ -11,8 +11,11 @@ namespace Starbender.RecipeApp.Services;
 
 public class RecipeAppService : CrudAppService<Recipe, RecipeDto>, IRecipeAppService
 {
-    private readonly IBlobContainerFactory _containerFactory;
+    public const string ContentType = "image/png";
+
+    //private readonly IBlobContainerFactory _containerFactory;
     private readonly RecipeAppOptions _options;
+    private readonly IBlobContainer _container;
 
     public RecipeAppService(
         IMapper mapper,
@@ -21,20 +24,21 @@ public class RecipeAppService : CrudAppService<Recipe, RecipeDto>, IRecipeAppSer
         ILogger<RecipeAppService> logger,
         IRepository<Recipe> repo) : base(mapper, logger, repo)
     {
-        _containerFactory = containerFactory;
         _options = options.Value;
+        _container = containerFactory.GetContainer(_options.ImageContainerId)
+            ?? throw new Exception($"Blob container '{_options.ImageStoreType}.{_options.ImageContainerId}' not found");
     }
 
-    public virtual async Task<FullRecipeDto> GetFullAsync(int recipeId, CancellationToken ct = default)
+    public virtual async Task<FullRecipeDto?> GetFullAsync(int recipeId, CancellationToken ct = default)
     {
 
         var thinDto = await base.GetAsync(recipeId, ct);
 
         var result = Mapper.Map<FullRecipeDto>(thinDto);
 
-        if (string.IsNullOrWhiteSpace(result.ImageBlobId))
+        if (result!=null && !string.IsNullOrWhiteSpace(result.ImageBlobId))
         {
-            result.Image = await GetRecipeImageAsync(recipeId, ct);
+            result.Image = await GetRecipeImageAsync(recipeId, ct) ?? new();
         }
 
         return result;
@@ -48,7 +52,7 @@ public class RecipeAppService : CrudAppService<Recipe, RecipeDto>, IRecipeAppSer
 
         var result = Mapper.Map<FullRecipeDto>(thinDto);
 
-        var byteData = updated.Image?.Content ?? Array.Empty<byte>();
+        var byteData = updated.Image.Content;
 
         if (byteData.Length > 0)
         {
@@ -60,9 +64,6 @@ public class RecipeAppService : CrudAppService<Recipe, RecipeDto>, IRecipeAppSer
 
     public async Task<BlobContentDto> SetRecipeImageAsync(int recipeId, byte[] imageBytes, CancellationToken ct = default)
     {
-        var container = _containerFactory.GetContainer(_options.ImageContainerId)
-            ?? throw new Exception($"No Recipe Image container found. ({_options.ImageStoreType}.{_options.ImageContainerId})");
-
         var recipe = await GetAsync(recipeId, ct);
 
         var blobId = recipe?.ImageBlobId;
@@ -70,13 +71,9 @@ public class RecipeAppService : CrudAppService<Recipe, RecipeDto>, IRecipeAppSer
         BlobContentDto? blobInfo;
         if (blobId == null)
         {
-            blobInfo = await container.CreateContentAsync(new BlobContentDto()
-            {
-                Content = imageBytes,
-                ContentType = "image/png"
-            }, ct);
+            blobInfo = await _container.CreateContentAsync(imageBytes, ContentType, ct);
 
-            if (recipe != null)
+            if (recipe != null && recipe.ImageBlobId !=blobInfo.BlobId)
             {
                 recipe.ImageBlobId = blobInfo.BlobId;
                 await UpdateAsync(recipe);
@@ -84,11 +81,7 @@ public class RecipeAppService : CrudAppService<Recipe, RecipeDto>, IRecipeAppSer
         }
         else
         {
-            blobInfo = await container.UpdateContentAsync(new BlobContentDto()
-            {
-                Content = imageBytes,
-                BlobId = blobId
-            }, ct);
+            blobInfo = await _container.UpdateContentAsync(blobId,imageBytes,ContentType, ct);
 
             if (blobInfo.BlobId != blobId && recipe != null)
             {
@@ -102,13 +95,6 @@ public class RecipeAppService : CrudAppService<Recipe, RecipeDto>, IRecipeAppSer
 
     public async Task<BlobContentDto?> GetRecipeImageAsync(int recipeId, CancellationToken ct = default)
     {
-        var container = GetImageContainer();
-
-        if (container == null)
-        {
-            return null;
-        }
-
         var recipe = await GetAsync(recipeId, ct);
 
         if (recipe == null)
@@ -124,7 +110,7 @@ public class RecipeAppService : CrudAppService<Recipe, RecipeDto>, IRecipeAppSer
         {
             try
             {
-                result = await container.GetContentAsync(blobId, ct);
+                result = await _container.GetContentAsync(blobId, ct);
             } catch
             {
                 Logger.LogWarning("ImageBlob not found in container, returning null");
@@ -133,7 +119,4 @@ public class RecipeAppService : CrudAppService<Recipe, RecipeDto>, IRecipeAppSer
 
         return result;
     }
-
-    private IBlobContainer? GetImageContainer() =>
-        _containerFactory.GetContainer(_options.ImageContainerId);
 }
