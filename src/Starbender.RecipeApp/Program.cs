@@ -1,5 +1,6 @@
 using Azure.Extensions.AspNetCore.Configuration.Secrets;
 using Azure.Identity;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Identity;
@@ -30,6 +31,15 @@ namespace Starbender.RecipeApp
             }
 
             builder.Services.AddHttpClient();
+
+            var dataProtectionBuilder = builder.Services.AddDataProtection()
+                .SetApplicationName("Starbender.RecipeApp");
+            var dataProtectionKeysPath = builder.Configuration["DataProtection:PersistKeysToFileSystem:Path"];
+            if (!string.IsNullOrWhiteSpace(dataProtectionKeysPath))
+            {
+                Directory.CreateDirectory(dataProtectionKeysPath);
+                dataProtectionBuilder.PersistKeysToFileSystem(new DirectoryInfo(dataProtectionKeysPath));
+            }
 
             // Add services to the container.
             builder.Services.AddRazorComponents()
@@ -146,7 +156,13 @@ namespace Starbender.RecipeApp
             }
 
             app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
-            app.UseHttpsRedirection();
+
+            var httpsPort = app.Configuration.GetValue<int?>("ASPNETCORE_HTTPS_PORT")
+                ?? app.Configuration.GetValue<int?>("HTTPS_PORT");
+            if (httpsPort.HasValue)
+            {
+                app.UseHttpsRedirection();
+            }
 
             app.UseAuthentication();
             app.UseAuthorization();
