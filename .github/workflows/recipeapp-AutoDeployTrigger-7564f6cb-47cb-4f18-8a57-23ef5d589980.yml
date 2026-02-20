@@ -34,16 +34,12 @@ jobs:
       - name: Build and push container image to registry
         uses: azure/container-apps-deploy-action@v2
         with:
-          appSourcePath: ${{ github.workspace }}src/Starbender.RecipeApp
-          _dockerfilePathKey_: _dockerfilePath_
-          _targetLabelKey_: _targetLabel_
+          appSourcePath: ${{ github.workspace }}/src/Starbender.RecipeApp
+          dockerfilePath: Dockerfile
+          acrName: sbdev
           registryUrl: sbdev.azurecr.io
-          registryUsername: ${{ secrets.RECIPEAPP_REGISTRY_USERNAME }}
-          registryPassword: ${{ secrets.RECIPEAPP_REGISTRY_PASSWORD }}
           containerAppName: recipeapp
           resourceGroup: Dev
           imageToBuild: sbdev.azurecr.io/recipeapp:${{ github.sha }}
-          _buildArgumentsKey_: |
-            _buildArgumentsValues_
 
 
