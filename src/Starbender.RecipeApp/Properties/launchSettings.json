@@ -31,11 +31,12 @@
       "commandName": "Docker",
       "launchBrowser": true,
       "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}",
-      "DockerfileRunArguments": "--network appnet --network-alias recipeapp -v C:/data/recipes:/data/recipes",
+      "DockerfileRunArguments": "--network appnet --network-alias recipeapp -v C:/data/recipes:/data/recipes -v apps_dpkeys:/data/dpkeys",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "ASPNETCORE_HTTP_PORTS": "8080",
-        "ConnectionStrings__Default": "Server=sqlserver;Database=RecipeDb;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True;"
+        "ConnectionStrings__Default": "Server=sqlserver;Database=RecipeDb;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True;",
+        "DataProtection__PersistKeysToFileSystem__Path": "/data/dpkeys"
       },
       "publishAllPorts": true,
       "useSSL": false
