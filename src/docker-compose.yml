@@ -1,6 +1,6 @@
 services:
   recipeapp:
-    image: recipeapp:dev
+    image: recipaapp:latest
     build:
       context: .
       dockerfile: Starbender.RecipeApp/Dockerfile
@@ -11,19 +11,14 @@ services:
         aliases:
           - recipeapp
     volumes:
-      - C:/data/recipes:/data/recipes
-      - dpkeys:/data/dpkeys
+      - C:/app/data/recipes:/app/data/recipes
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_HTTP_PORTS: "8080"
       ConnectionStrings__Default: "Server=sqlserver;Database=RecipeDb;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True;"
-      DataProtection__PersistKeysToFileSystem__Path: /data/dpkeys
     ports:
       - "32109:8080"
 
 networks:
   appnet:
     external: true
-
-volumes:
-  dpkeys:

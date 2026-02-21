@@ -31,6 +31,30 @@ jobs:
           tenant-id: ${{ secrets.RECIPEAPP_AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.RECIPEAPP_AZURE_SUBSCRIPTION_ID }}
 
+      - name: Ensure Persistent Data environment storage mapping
+        shell: bash
+        env:
+          RESOURCE_GROUP: Dev
+          CONTAINER_ENV_NAME: recipeapp-env
+          ENV_STORAGE_NAME: recipes
+          AZURE_FILE_ACCOUNT_NAME: ${{ secrets.RECIPEAPP_STORAGE_ACCOUNT_NAME }}
+          AZURE_FILE_ACCOUNT_KEY: ${{ secrets.RECIPEAPP_STORAGE_ACCOUNT_KEY }}
+          AZURE_FILE_SHARE_NAME: ${{ secrets.RECIPEAPP_RECIPES_SHARE_NAME }}
+        run: |
+          set -euo pipefail
+
+          az extension add --name containerapp --upgrade --allow-preview true --output none
+
+          az containerapp env storage set \
+            --resource-group "$RESOURCE_GROUP" \
+            --name "$CONTAINER_ENV_NAME" \
+            --storage-name "$ENV_STORAGE_NAME" \
+            --azure-file-account-name "$AZURE_FILE_ACCOUNT_NAME" \
+            --azure-file-account-key "$AZURE_FILE_ACCOUNT_KEY" \
+            --azure-file-share-name "$AZURE_FILE_SHARE_NAME" \
+            --access-mode ReadWrite \
+            --output none
+
       - name: Build and push container image to registry
         uses: azure/container-apps-deploy-action@v2
         with:
@@ -41,15 +65,17 @@ jobs:
           resourceGroup: Dev
           imageToBuild: sbdev.azurecr.io/recipeapp:${{ github.sha }}
 
-      - name: Configure Data Protection volume mount
+      - name: Configure Persistent Data volume mount
         shell: bash
         env:
           RESOURCE_GROUP: Dev
           CONTAINER_APP_NAME: recipeapp
           CONTAINER_ENV_NAME: recipeapp-env
-          ENV_STORAGE_NAME: dpkeysstorage
-          VOLUME_NAME: dpkeys
-          MOUNT_PATH: /data/dpkeys
+          ENV_STORAGE_NAME: recipes
+          VOLUME_NAME: recipedata
+          MOUNT_PATH: /app/data/recipes
+          KEYVAULT_ENABLED: ${{ vars.KEYVAULT__ENABLED }}
+          KEYVAULT_VAULTURI: ${{ vars.KEYVAULT__VAULTURI }}
         run: |
           set -euo pipefail
 
@@ -74,6 +100,6 @@ jobs:
                   template.containers[0].name="$container_name" \
                   template.containers[0].volumeMounts[0].volumeName="$VOLUME_NAME" \
                   template.containers[0].volumeMounts[0].mountPath="$MOUNT_PATH" \
-            --set-env-vars DataProtection__PersistKeysToFileSystem__Path="$MOUNT_PATH"
-
-
+            --set-env-vars DataProtection__PersistKeysToFileSystem__Path="$MOUNT_PATH/dpkeys" \
+                           KeyVault__Enabled="$KEYVAULT_ENABLED" \
+                           KeyVault__VaultUri="$KEYVAULT_VAULTURI"

@@ -32,6 +32,10 @@ RUN dotnet publish "./Starbender.RecipeApp.csproj" -c $BUILD_CONFIGURATION -o /a
 
 # This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final
+RUN mkdir -p /app/data/recipes
+RUN chown -R $APP_UID /app/data/recipes
+RUN chmod -R 750 /app/data/recipes
+
 WORKDIR /app
 COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "Starbender.RecipeApp.dll"]

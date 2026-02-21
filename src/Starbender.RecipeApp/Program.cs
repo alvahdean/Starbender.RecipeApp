@@ -34,7 +34,9 @@ namespace Starbender.RecipeApp
 
             var dataProtectionBuilder = builder.Services.AddDataProtection()
                 .SetApplicationName("Starbender.RecipeApp");
+
             var dataProtectionKeysPath = builder.Configuration["DataProtection:PersistKeysToFileSystem:Path"];
+            
             if (!string.IsNullOrWhiteSpace(dataProtectionKeysPath))
             {
                 Directory.CreateDirectory(dataProtectionKeysPath);
