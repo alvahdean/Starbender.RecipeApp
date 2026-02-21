@@ -1,8 +1,6 @@
-using Azure.Extensions.AspNetCore.Configuration.Secrets;
 using Azure.Identity;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
@@ -10,6 +8,7 @@ using Starbender.Core.Extensions;
 using Starbender.RecipeApp.Components;
 using Starbender.RecipeApp.Components.Account;
 using Starbender.RecipeApp.EntityFrameworkCore;
+
 namespace Starbender.RecipeApp
 {
     public class Program
@@ -19,7 +18,8 @@ namespace Starbender.RecipeApp
             var builder = WebApplication.CreateBuilder(args);
 
             var keyVaultSection = builder.Configuration.GetSection("KeyVault");
-            if (keyVaultSection.GetValue<bool>("Enabled"))
+            var useKeyVault = keyVaultSection.GetValue("Enabled", false);
+            if (useKeyVault)
             {
                 var vaultUri = keyVaultSection["VaultUri"];
                 if (string.IsNullOrWhiteSpace(vaultUri))
