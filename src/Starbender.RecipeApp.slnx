@@ -17,9 +17,8 @@
     <File Path="../.gitignore" />
     <File Path="../LICENSE.md" />
     <File Path="../README.md" />
-  </Folder>
-  <Folder Name="/_Metadata/scripts/">
-    <File Path="../scripts/migrate-database.cmd" />
+    <File Path="docker-compose.yml" />
+    <File Path="migrate-database.cmd" />
   </Folder>
   <Project Path="Starbender.RecipeApp/Starbender.RecipeApp.csproj" />
 </Solution>

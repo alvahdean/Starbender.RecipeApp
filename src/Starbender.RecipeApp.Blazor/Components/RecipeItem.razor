@@ -1,4 +1,6 @@
-﻿@using Microsoft.Extensions.Options
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.Extensions.Options
+@using Starbender.RecipeApp.Services.Contracts.Authorization
 @inherits RecipeComponentBase
 
 @if (Recipe != null)
@@ -7,23 +9,46 @@
         <MudStack Class="ma-0 gap-0 w-100">
             <MudStack Row Class="ma-0 gap-0 w-100">
                 <MudText Typo="@Typo.h5" Class="w-100 text-wrap">@Recipe.Title</MudText>
+                <MudChip T="string"
+                         Size="Size.Small"
+                         Color="@(Recipe.IsPublic ? Color.Success : Color.Default)"
+                         Variant="Variant.Outlined"
+                         Class="me-2">
+                    @(Recipe.IsPublic ? "Public" : "Private")
+                </MudChip>
                 <MudSpacer />
-                <MudTooltip Delay="300" Text="Delete the recipe">
-                    <span @onclick:stopPropagation="true">
-                        <MudIconButton Icon="@Icons.Material.Filled.Close"
-                        Color="Color.Error"
-                        Size="Size.Small"
-                        OnClick="@(async () => await HandleRecipeDeleteAsync())"
-                        aria-label="Delete recipe" />
-                    </span>
-                </MudTooltip>
+
+                @if (CanTogglePublish)
+                {
+                    <MudTooltip Delay="300" Text="@(Recipe.IsPublic ? "Unpublish recipe" : "Publish recipe")">
+                        <span @onclick:stopPropagation="true">
+                            <MudIconButton Icon="@(Recipe.IsPublic ? Icons.Material.Filled.VisibilityOff : Icons.Material.Filled.Visibility)"
+                                           Color="Color.Primary"
+                                           Size="Size.Small"
+                                           OnClick="@(async () => await HandleTogglePublishAsync())"
+                                           aria-label="Toggle recipe visibility" />
+                        </span>
+                    </MudTooltip>
+                }
+
+                @if (CanDelete)
+                {
+                    <MudTooltip Delay="300" Text="Delete the recipe">
+                        <span @onclick:stopPropagation="true">
+                            <MudIconButton Icon="@Icons.Material.Filled.Close"
+                                           Color="Color.Error"
+                                           Size="Size.Small"
+                                           OnClick="@(async () => await HandleRecipeDeleteAsync())"
+                                           aria-label="Delete recipe" />
+                        </span>
+                    </MudTooltip>
+                }
             </MudStack>
             <MudStack Row Class="ma-0 gap-0 w-100">
-                <RecipeImage BlobContent="@Recipe.Image" IsEditable="false"/>
+                <RecipeImage BlobContent="@Recipe.Image" IsEditable="false" />
                 <MudStack Class="pa-0 gap-0 w-100" Style="min-width:0;">
                     <MudStack Row Class="ma-0 gap-0 w-100">
                         <MudText Typo="@Typo.subtitle2" Class="w-100 text-wrap">@Recipe.Description</MudText>
-
                     </MudStack>
 
                     <RecipeIngredients IsEditable="false" @bind-Ingredients="@Recipe.RecipeIngredients" />
@@ -37,6 +62,7 @@
     [Inject] IRecipeAppService RecipeService { get; set; } = default!;
     [Inject] IOptions<RecipeAppOptions> Options { get; set; } = default!;
     [Inject] IDialogService DialogService { get; set; } = default!;
+    [Inject] AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
 
     [Parameter] public bool IsEditable { get; set; } = true;
     [Parameter] public int RecipeId { get; set; }
@@ -44,19 +70,45 @@
 
     private FullRecipeDto? Recipe { get; set; }
 
+    private string? _currentUserId;
+    private bool _canManageOwnedRecipe;
+    private bool _canModifyAnyRecipe;
+    private bool _canPublishOwnedRecipe;
+    private bool _canUnpublishOwnedRecipe;
+
+    private bool IsOwner => Recipe is not null
+        && !string.IsNullOrWhiteSpace(_currentUserId)
+        && string.Equals(Recipe.UserId, _currentUserId, StringComparison.Ordinal);
+
+    private bool CanEdit => Recipe is not null && (_canModifyAnyRecipe || (_canManageOwnedRecipe && IsOwner));
+    private bool CanDelete => IsEditable && CanEdit;
+
+    private bool CanTogglePublish => Recipe is not null
+        && (_canModifyAnyRecipe
+            || (IsOwner && ((Recipe.IsPublic && _canUnpublishOwnedRecipe) || (!Recipe.IsPublic && _canPublishOwnedRecipe))));
+
     protected async override Task OnParametersSetAsync()
     {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        _currentUserId = RecipeAuthorizationEvaluator.GetUserId(user);
+        _canManageOwnedRecipe = RecipeAuthorizationEvaluator.HasPermission(user, RecipeAppPermissions.ManageOwnedRecipe);
+        _canModifyAnyRecipe = RecipeAuthorizationEvaluator.HasPermission(user, RecipeAppPermissions.ModifyAnyRecipe);
+        _canPublishOwnedRecipe = RecipeAuthorizationEvaluator.HasPermission(user, RecipeAppPermissions.PublishOwnedRecipe);
+        _canUnpublishOwnedRecipe = RecipeAuthorizationEvaluator.HasPermission(user, RecipeAppPermissions.UnpublishOwnedRecipe);
+
         if (RecipeId > 0)
         {
             Recipe = await RecipeService.GetFullAsync(RecipeId, CancellationToken.None);
         }
 
-        await base.OnInitializedAsync();
+        await base.OnParametersSetAsync();
     }
 
     private async Task OpenEditorAsync()
     {
-        if (Recipe is null)
+        if (Recipe is null || !CanEdit)
         {
             return;
         }
@@ -77,12 +129,12 @@
         };
 
         var dialog = await DialogService.ShowAsync<RecipeEditorDialog>("Edit Recipe", parameters, options);
-        var result = await dialog.Result;
+        await dialog.Result;
     }
 
     private async Task HandleRecipeDeleteAsync()
     {
-        if (Recipe == null)
+        if (Recipe == null || !CanDelete)
         {
             return;
         }
@@ -106,19 +158,61 @@
             {
                 await RecipeService.DeleteAsync(Recipe.Id);
                 await OnDelete.InvokeAsync(recipeId);
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 Snackbar.Add($"Delete failed: {ex.Message}", Severity.Error);
+                return;
             }
         }
 
         Recipe = null;
     }
 
+    private async Task HandleTogglePublishAsync()
+    {
+        if (Recipe is null || !CanTogglePublish)
+        {
+            return;
+        }
+
+        try
+        {
+            if (Recipe.IsPublic)
+            {
+                await RecipeService.UnpublishAsync(Recipe.Id);
+                Recipe.IsPublic = false;
+                Snackbar.Add("Recipe is now private.", Severity.Success);
+            }
+            else
+            {
+                await RecipeService.PublishAsync(Recipe.Id);
+                Recipe.IsPublic = true;
+                Snackbar.Add("Recipe is now public.", Severity.Success);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Visibility update failed: {ex.Message}", Severity.Error);
+        }
+    }
+
     private async Task HandleRecipeUpdatedAsync(FullRecipeDto updated)
     {
+        if (Recipe is null)
+        {
+            return;
+        }
+
         Mapper.Map(updated, Recipe);
-        Recipe = await RecipeService.UpdateFullAsync(updated, CancellationToken.None);
-        // StateHasChanged();
+
+        try
+        {
+            Recipe = await RecipeService.UpdateFullAsync(updated, CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Save failed: {ex.Message}", Severity.Error);
+        }
     }
 }

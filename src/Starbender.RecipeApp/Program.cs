@@ -4,10 +4,13 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
+using Starbender.Core;
 using Starbender.Core.Extensions;
 using Starbender.RecipeApp.Components;
 using Starbender.RecipeApp.Components.Account;
 using Starbender.RecipeApp.EntityFrameworkCore;
+using Starbender.RecipeApp.Security;
+using Starbender.RecipeApp.Services.Contracts.Authorization;
 
 namespace Starbender.RecipeApp
 {
@@ -50,6 +53,22 @@ namespace Starbender.RecipeApp
             builder.Services.AddCascadingAuthenticationState();
             builder.Services.AddScoped<IdentityRedirectManager>();
             builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
+            builder.Services.AddScoped<ICurrentUserAccessor, AuthenticationStateCurrentUserAccessor>();
+            builder.Services.AddScoped<IPermissionService, CurrentUserPermissionService>();
+            builder.Services.AddOptions<BootstrapUserOptions>()
+                .BindConfiguration(BootstrapUserOptions.ConfigurationSection);
+            builder.Services.AddHostedService<BootstrapUserHostedService>();
+            builder.Services.AddAuthorization(options =>
+            {
+                foreach (var permission in RecipeAppPermissions.All)
+                {
+                    options.AddPolicy(RecipeAppPolicies.Permission(permission), policy =>
+                    {
+                        policy.RequireAssertion(context =>
+                            RecipeAuthorizationEvaluator.HasPermission(context.User, permission));
+                    });
+                }
+            });
 
             var authenticationBuilder = builder.Services.AddAuthentication(options =>
             {

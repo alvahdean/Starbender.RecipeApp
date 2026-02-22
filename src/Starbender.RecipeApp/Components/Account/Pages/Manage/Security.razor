@@ -1,0 +1,279 @@
+@page "/Account/Manage/Security"
+@rendermode InteractiveServer
+@layout Starbender.RecipeApp.Components.Layout.MainLayout
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using Starbender.RecipeApp.EntityFrameworkCore
+@using Starbender.RecipeApp.Services.Contracts.Authorization
+@attribute [Authorize(Policy = RecipeAppPolicies.ManageSecurity)]
+
+@inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<PageTitle>Security permissions</PageTitle>
+
+<h3>Security permissions</h3>
+<StatusMessage Message="@message" />
+
+<div class="row">
+    <div class="col-xl-8">
+        @if (isLoading)
+        {
+            <p>Loading users...</p>
+        }
+        else if (users.Count == 0)
+        {
+            <div class="alert alert-warning" role="alert">
+                No users found.
+            </div>
+        }
+        else
+        {
+            <div class="mb-3">
+                <label for="security-user-select" class="form-label">User</label>
+                <select id="security-user-select" class="form-select" value="@selectedUserId" @onchange="OnSelectedUserChangedAsync">
+                    @foreach (var user in users)
+                    {
+                        <option value="@user.Id">@user.DisplayName</option>
+                    }
+                </select>
+            </div>
+
+            @if (selectedUser is not null)
+            {
+                <div class="mb-3">
+                    <div><strong>User name:</strong> @selectedUser.UserName</div>
+                    <div><strong>Email:</strong> @(string.IsNullOrWhiteSpace(selectedUser.Email) ? "(none)" : selectedUser.Email)</div>
+                </div>
+
+                <div class="alert alert-info" role="alert">
+                    Authenticated users implicitly have <code>ManageOwnedRecipe</code> and <code>UnpublishOwnedRecipe</code>. These are shown but not editable here.
+                </div>
+
+                <EditForm Model="formModel" OnValidSubmit="SaveAsync">
+                    <div @key="selectedUserId">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr>
+                                <th>Permission</th>
+                                <th>Access</th>
+                                <th>Source</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var permission in permissions)
+                            {
+                                <tr>
+                                    <td><code>@permission.Permission</code></td>
+                                    <td>
+                                        <InputCheckbox @bind-Value="permission.IsGranted" disabled="@permission.IsImplicitDefault" />
+                                    </td>
+                                    <td>
+                                        @if (permission.IsImplicitDefault)
+                                        {
+                                            <span class="badge text-bg-secondary">Implicit default</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge text-bg-primary">Explicit claim</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                    </div>
+
+                    <button class="btn btn-primary" type="submit" disabled="@isSaving">@(isSaving ? "Saving..." : "Save permissions")</button>
+                </EditForm>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    private string? message;
+    private bool isLoading = true;
+    private bool isSaving;
+    private readonly object formModel = new();
+
+    private List<UserListItem> users = [];
+    private List<PermissionSelection> permissions = [];
+    private string? selectedUserId;
+    private ApplicationUser? selectedUser;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUsersAsync();
+        await LoadPermissionRowsAsync();
+
+        if (users.Count > 0)
+        {
+            selectedUserId = users[0].Id;
+            await LoadSelectedUserAsync();
+        }
+
+        isLoading = false;
+    }
+
+    private async Task LoadUsersAsync()
+    {
+        users = await UserManager.Users
+            .OrderBy(u => u.UserName)
+            .Select(u => new UserListItem
+            {
+                Id = u.Id,
+                UserName = u.UserName,
+                Email = u.Email
+            })
+            .ToListAsync();
+    }
+
+    private Task LoadPermissionRowsAsync()
+    {
+        permissions = RecipeAppPermissions.All
+            .OrderBy(p => p)
+            .Select(permission => new PermissionSelection
+            {
+                Permission = permission,
+                IsImplicitDefault = RecipeAuthorizationEvaluator.IsImplicitDefaultPermission(permission),
+                IsGranted = RecipeAuthorizationEvaluator.IsImplicitDefaultPermission(permission)
+            })
+            .ToList();
+
+        return Task.CompletedTask;
+    }
+
+    private async Task OnSelectedUserChangedAsync(ChangeEventArgs args)
+    {
+        selectedUserId = args.Value?.ToString();
+        await LoadSelectedUserAsync();
+    }
+
+    private async Task LoadSelectedUserAsync()
+    {
+        message = null;
+        selectedUser = null;
+
+        foreach (var permission in permissions)
+        {
+            permission.IsGranted = permission.IsImplicitDefault;
+        }
+
+        if (string.IsNullOrWhiteSpace(selectedUserId))
+        {
+            return;
+        }
+
+        selectedUser = await UserManager.FindByIdAsync(selectedUserId);
+        if (selectedUser is null)
+        {
+            message = "Error: Selected user was not found.";
+            return;
+        }
+
+        var claims = await UserManager.GetClaimsAsync(selectedUser);
+        var explicitPermissions = claims
+            .Where(c => string.Equals(c.Type, RecipeAppClaimTypes.Permission, StringComparison.OrdinalIgnoreCase))
+            .Select(c => c.Value)
+            .ToHashSet(StringComparer.Ordinal);
+
+        foreach (var permission in permissions.Where(p => !p.IsImplicitDefault))
+        {
+            permission.IsGranted = explicitPermissions.Contains(permission.Permission);
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        if (selectedUser is null)
+        {
+            message = "Error: No user selected.";
+            return;
+        }
+
+        isSaving = true;
+        message = null;
+
+        try
+        {
+            var claims = await UserManager.GetClaimsAsync(selectedUser);
+            var existingPermissionClaims = claims
+                .Where(c => string.Equals(c.Type, RecipeAppClaimTypes.Permission, StringComparison.OrdinalIgnoreCase))
+                .Where(c => RecipeAppPermissions.All.Contains(c.Value, StringComparer.Ordinal))
+                .ToList();
+
+            var desiredExplicitPermissions = permissions
+                .Where(p => !p.IsImplicitDefault && p.IsGranted)
+                .Select(p => p.Permission)
+                .ToHashSet(StringComparer.Ordinal);
+
+            var existingExplicitPermissions = existingPermissionClaims
+                .Select(c => c.Value)
+                .ToHashSet(StringComparer.Ordinal);
+
+            var claimsToAdd = desiredExplicitPermissions
+                .Except(existingExplicitPermissions, StringComparer.Ordinal)
+                .Select(p => new Claim(RecipeAppClaimTypes.Permission, p))
+                .ToList();
+
+            var claimsToRemove = existingPermissionClaims
+                .Where(c => !desiredExplicitPermissions.Contains(c.Value))
+                .Cast<Claim>()
+                .ToList();
+
+            if (claimsToAdd.Count > 0)
+            {
+                var addResult = await UserManager.AddClaimsAsync(selectedUser, claimsToAdd);
+                if (!addResult.Succeeded)
+                {
+                    message = $"Error: Failed to add permissions. {string.Join("; ", addResult.Errors.Select(e => e.Description))}";
+                    return;
+                }
+            }
+
+            if (claimsToRemove.Count > 0)
+            {
+                var removeResult = await UserManager.RemoveClaimsAsync(selectedUser, claimsToRemove);
+                if (!removeResult.Succeeded)
+                {
+                    message = $"Error: Failed to remove permissions. {string.Join("; ", removeResult.Errors.Select(e => e.Description))}";
+                    return;
+                }
+            }
+
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var currentUser = await UserManager.GetUserAsync(authState.User);
+            if (currentUser is not null && string.Equals(currentUser.Id, selectedUser.Id, StringComparison.Ordinal))
+            {
+                await SignInManager.RefreshSignInAsync(currentUser);
+            }
+
+            await LoadSelectedUserAsync();
+            message = $"Updated permissions for '{selectedUser.UserName}'.";
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private sealed class UserListItem
+    {
+        public string Id { get; set; } = string.Empty;
+        public string? UserName { get; set; }
+        public string? Email { get; set; }
+        public string DisplayName => string.IsNullOrWhiteSpace(Email) ? (UserName ?? Id) : $"{UserName} ({Email})";
+    }
+
+    private sealed class PermissionSelection
+    {
+        public string Permission { get; set; } = string.Empty;
+        public bool IsGranted { get; set; }
+        public bool IsImplicitDefault { get; set; }
+    }
+}
