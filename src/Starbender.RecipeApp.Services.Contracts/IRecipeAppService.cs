@@ -9,4 +9,6 @@ public interface IRecipeAppService : ICrudAppService<RecipeDto>
     Task<BlobContentDto?> GetRecipeImageAsync(int recipeId, CancellationToken ct);
     Task<FullRecipeDto?> GetFullAsync(int recipeId, CancellationToken ct);
     Task<FullRecipeDto> UpdateFullAsync(FullRecipeDto updated, CancellationToken ct);
+    Task PublishAsync(int recipeId, CancellationToken ct = default);
+    Task UnpublishAsync(int recipeId, CancellationToken ct = default);
 }
