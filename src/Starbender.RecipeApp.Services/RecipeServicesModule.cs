@@ -4,7 +4,6 @@ using Starbender.Core.Extensions;
 using Starbender.RecipeApp.Domain;
 using Starbender.RecipeApp.EntityFrameworkCore;
 using Starbender.RecipeApp.Services.Contracts;
-using Starbender.RecipeApp.Services.Contracts.Options;
 
 namespace Starbender.RecipeApp.Services;
 

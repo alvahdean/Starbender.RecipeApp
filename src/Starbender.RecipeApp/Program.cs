@@ -1,14 +1,17 @@
-using Azure.Extensions.AspNetCore.Configuration.Secrets;
 using Azure.Identity;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
+using Starbender.Core;
 using Starbender.Core.Extensions;
 using Starbender.RecipeApp.Components;
 using Starbender.RecipeApp.Components.Account;
 using Starbender.RecipeApp.EntityFrameworkCore;
+using Starbender.RecipeApp.Security;
+using Starbender.RecipeApp.Services.Contracts.Authorization;
+
 namespace Starbender.RecipeApp
 {
     public class Program
@@ -18,7 +21,8 @@ namespace Starbender.RecipeApp
             var builder = WebApplication.CreateBuilder(args);
 
             var keyVaultSection = builder.Configuration.GetSection("KeyVault");
-            if (keyVaultSection.GetValue<bool>("Enabled"))
+            var useKeyVault = keyVaultSection.GetValue("Enabled", false);
+            if (useKeyVault)
             {
                 var vaultUri = keyVaultSection["VaultUri"];
                 if (string.IsNullOrWhiteSpace(vaultUri))
@@ -29,6 +33,19 @@ namespace Starbender.RecipeApp
                 builder.Configuration.AddAzureKeyVault(new Uri(vaultUri), new DefaultAzureCredential());
             }
 
+            builder.Services.AddHttpClient();
+
+            var dataProtectionBuilder = builder.Services.AddDataProtection()
+                .SetApplicationName("Starbender.RecipeApp");
+
+            var dataProtectionKeysPath = builder.Configuration["DataProtection:PersistKeysToFileSystem:Path"];
+            
+            if (!string.IsNullOrWhiteSpace(dataProtectionKeysPath))
+            {
+                Directory.CreateDirectory(dataProtectionKeysPath);
+                dataProtectionBuilder.PersistKeysToFileSystem(new DirectoryInfo(dataProtectionKeysPath));
+            }
+
             // Add services to the container.
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents();
@@ -36,6 +53,22 @@ namespace Starbender.RecipeApp
             builder.Services.AddCascadingAuthenticationState();
             builder.Services.AddScoped<IdentityRedirectManager>();
             builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
+            builder.Services.AddScoped<ICurrentUserAccessor, AuthenticationStateCurrentUserAccessor>();
+            builder.Services.AddScoped<IPermissionService, CurrentUserPermissionService>();
+            builder.Services.AddOptions<BootstrapUserOptions>()
+                .BindConfiguration(BootstrapUserOptions.ConfigurationSection);
+            builder.Services.AddHostedService<BootstrapUserHostedService>();
+            builder.Services.AddAuthorization(options =>
+            {
+                foreach (var permission in RecipeAppPermissions.All)
+                {
+                    options.AddPolicy(RecipeAppPolicies.Permission(permission), policy =>
+                    {
+                        policy.RequireAssertion(context =>
+                            RecipeAuthorizationEvaluator.HasPermission(context.User, permission));
+                    });
+                }
+            });
 
             var authenticationBuilder = builder.Services.AddAuthentication(options =>
             {
@@ -94,7 +127,9 @@ namespace Starbender.RecipeApp
 
             var connectionString = builder.Configuration.GetConnectionString("Default")
                 ?? throw new InvalidOperationException("Connection string 'Default' not found.");
+            
             var sqlServerSection = builder.Configuration.GetSection("Database:SqlServer");
+            
             var commandTimeoutSeconds = sqlServerSection.GetValue<int?>("CommandTimeoutSeconds") ?? 180;
             var maxRetryCount = sqlServerSection.GetValue<int?>("MaxRetryCount") ?? 10;
             var maxRetryDelaySeconds = sqlServerSection.GetValue<int?>("MaxRetryDelaySeconds") ?? 30;
@@ -142,7 +177,13 @@ namespace Starbender.RecipeApp
             }
 
             app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
-            app.UseHttpsRedirection();
+
+            var httpsPort = app.Configuration.GetValue<int?>("ASPNETCORE_HTTPS_PORT")
+                ?? app.Configuration.GetValue<int?>("HTTPS_PORT");
+            if (httpsPort.HasValue)
+            {
+                app.UseHttpsRedirection();
+            }
 
             app.UseAuthentication();
             app.UseAuthorization();

@@ -37,7 +37,7 @@ public class CrudAppService<TEntity, TDto, TKey> : ICrudAppService<TDto, TKey>
         Repo = repo;
     }
 
-    public async Task<TDto?> GetAsync(TKey id, CancellationToken ct = default)
+    public virtual async Task<TDto?> GetAsync(TKey id, CancellationToken ct = default)
     {
         var entity = await Repo.GetAsync(id, ct);
         var dto = Mapper.Map<TDto>(entity);
@@ -45,7 +45,7 @@ public class CrudAppService<TEntity, TDto, TKey> : ICrudAppService<TDto, TKey>
         return dto;
     }
 
-    public async Task<IReadOnlyList<TDto>> GetAllAsync(CancellationToken ct = default)
+    public virtual async Task<IReadOnlyList<TDto>> GetAllAsync(CancellationToken ct = default)
     {
         var entities = await Repo.GetAllAsync(ct);
         var dtos = Mapper.Map<IEnumerable<TDto>>(entities);
@@ -53,7 +53,7 @@ public class CrudAppService<TEntity, TDto, TKey> : ICrudAppService<TDto, TKey>
         return dtos.ToList();
     }
 
-    public async Task<TDto> CreateAsync(TDto dto, CancellationToken ct = default)
+    public virtual async Task<TDto> CreateAsync(TDto dto, CancellationToken ct = default)
     {
         var entity = Mapper.Map<TEntity>(dto);
         entity = await Repo.CreateAsync(entity, ct);
@@ -62,12 +62,9 @@ public class CrudAppService<TEntity, TDto, TKey> : ICrudAppService<TDto, TKey>
         return result;
     }
 
-    public async Task<TDto> UpdateAsync(TDto dto, CancellationToken ct = default)
+    public virtual async Task<TDto> UpdateAsync(TDto dto, CancellationToken ct = default)
     {
-        if (dto == null)
-        {
-            throw new ArgumentNullException(nameof(dto));
-        }
+        ArgumentNullException.ThrowIfNull(dto);
 
         if (dto.Id.Equals(default(TKey)))
         {
@@ -90,12 +87,12 @@ public class CrudAppService<TEntity, TDto, TKey> : ICrudAppService<TDto, TKey>
         return result;
     }
 
-    public async Task DeleteAsync(TKey id, CancellationToken ct = default)
+    public virtual async Task DeleteAsync(TKey id, CancellationToken ct = default)
     {
         await Repo.DeleteAsync(id, ct);
     }
 
-    public async Task<bool> ExistsAsync(TKey id, CancellationToken ct = default)
+    public virtual async Task<bool> ExistsAsync(TKey id, CancellationToken ct = default)
     {
         var result = await Repo.ExistsAsync(id, ct);
 

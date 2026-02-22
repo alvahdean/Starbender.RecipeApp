@@ -1,41 +1,121 @@
+@using AutoMapper
+@using Starbender.BlobStorage.Contracts
 @inherits RecipeComponentBase
 
-<RecipeEditor Model="Model" OnValidSubmit="HandleSavedAsync" OnCancel="HandleCancelAsync" />
+<MudDialog>
+    <DialogContent>
+        <MudForm Model="_recipeModel" @ref="_form">
+            <MudStack>
+                <MudStack Row>
+                    <RecipeImage
+                        IsEditable="true"
+                        Width="150"
+                        Height="150"
+                        BlobContent="@(_recipeModel.Image)"
+                        BlobContentChanged="HandleBlobChangedAsync"/>
+
+                    <MudStack Style="width: 100%;">
+                        <MudTextField
+                            T="string"
+                            Label="Title"
+                            Variant="Variant.Outlined"
+                            Margin="Margin.Dense"
+                            Style="width: 100%;"
+                            For="@(() => _recipeModel.Title)"
+                            @bind-Value="_recipeModel.Title"
+                            Required="true"
+                            RequiredError="Title is required." />
+
+                        <MudTextField
+                            T="string"
+                            Label="Description"
+                            Variant="Variant.Outlined"
+                            Margin="Margin.Dense"
+                            Style="width: 100%;"
+                            For="@(() => _recipeModel.Description)"
+                            @bind-Value="_recipeModel.Description"
+                            Lines="3"
+                            Required="true"
+                            RequiredError="Description is required." />
+                    </MudStack>
+                </MudStack>
+
+                <RecipeIngredients
+                    @bind-Ingredients=@(_recipeModel.RecipeIngredients)
+                    IsEditable="true" />
+
+                <MudTextField
+                    T="string"
+                    Label="Instructions"
+                    Variant="Variant.Outlined"
+                    Margin="Margin.Dense"
+                    For="@(() => _recipeModel.Instructions)"
+                    @bind-Value="_recipeModel.Instructions"
+                    Lines="5" 
+                    MaxLines="20"
+                    AutoGrow="true"/>
+            </MudStack>
+        </MudForm>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="HandleCancelAsync">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="HandleSaveAsync">Save</MudButton>
+    </DialogActions>
+</MudDialog>
 
 @code {
-
-    [Inject] private IRecipeAppService RecipeService { get; set; } = null!;
-
     [CascadingParameter]
     private IMudDialogInstance MudDialog { get; set; } = default!;
 
     [Parameter]
-    public RecipeDto Model { get; set; } = new();
+    public FullRecipeDto Model { get; set; } = new();
 
     [Parameter]
-    public EventCallback<RecipeDto> OnSaved { get; set; }
+    public EventCallback<FullRecipeDto> OnSaved { get; set; }
 
-    private async Task HandleSavedAsync(RecipeDto recipe)
+    private MudForm? _form;
+    private FullRecipeDto _recipeModel = new();
+
+    protected override void OnParametersSet()
     {
-        try
-        {
-            Model = Model.Id == 0
-                ? await RecipeService.CreateAsync(Model)
-                : await RecipeService.UpdateAsync(Model);
+        _recipeModel = Model != null ? Mapper.Map<FullRecipeDto>(Model) : new();
 
-            await OnSaved.InvokeAsync(Model);
-            Snackbar.Add("Saved", Severity.Success);
-            MudDialog.Close(DialogResult.Ok(Model));
-        }
-        catch (Exception ex)
+        base.OnParametersSet();
+    }
+
+    private async Task HandleSaveAsync()
+    {
+        if (_form is null)
         {
-            Snackbar.Add(ex.Message, Severity.Error);
+            return;
         }
+
+        await _form.Validate();
+
+        if (_form.IsValid != true)
+        {
+            return;
+        }
+
+        Mapper.Map(_recipeModel, Model);
+
+        await OnSaved.InvokeAsync(Model);
+
+        MudDialog.Close();
     }
 
     private Task HandleCancelAsync()
     {
         MudDialog.Cancel();
+        return Task.CompletedTask;
+    }
+
+    private Task HandleBlobChangedAsync(BlobContentDto blob)
+    {
+        _recipeModel.ImageBlobId = blob.BlobId;
+        _recipeModel.Image = blob;
+
         return Task.CompletedTask;
     }
 }

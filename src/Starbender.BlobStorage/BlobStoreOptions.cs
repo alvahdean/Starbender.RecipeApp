@@ -1,6 +1,6 @@
-﻿using Starbender.BlobStorage.Contracts;
+using Starbender.BlobStorage.Contracts;
 
-namespace Starbender.BlobStorage.Options;
+namespace Starbender.BlobStorage;
 
 /// <summary>
 /// Options for configuring blob storage containers
@@ -8,7 +8,7 @@ namespace Starbender.BlobStorage.Options;
 public class BlobStoreOptions
 {
     public const string DefaultConfigurationKey = "BlobStorage";
-    public BlobContainerOptions[] Containers { get; set; } = Array.Empty<BlobContainerOptions>();
+    public Dictionary<string, BlobContainerOptions> Containers { get; set; } = new();
 }
 
 /// <summary>

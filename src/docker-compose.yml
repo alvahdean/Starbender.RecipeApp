@@ -1,0 +1,34 @@
+services:
+  recipeapp:
+    image: recipaapp:latest
+    build:
+      context: .
+      dockerfile: Starbender.RecipeApp/Dockerfile
+    container_name: recipeapp
+    command: ["dotnet", "Starbender.RecipeApp.dll"]
+    networks:
+      appnet:
+        aliases:
+          - recipeapp
+    volumes:
+      - C:/app/data/recipes:/app/data/recipes
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ConnectionStrings__Default: "Server=sqlserver;Database=RecipeDb;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True;"
+      # Bootstrap admin (optional)
+      Authorization__BootstrapUser__Enabled: "true"
+      Authorization__BootstrapUser__Email: "admin@recipeapp.starbendersystems.com"
+      Authorization__BootstrapUser__UserName: "admin@recipeapp.starbendersystems.com"
+      Authorization__BootstrapUser__Password: "Use-A-Real-Secret"
+      Authorization__BootstrapUser__AutoCreate: "true"
+      Authorization__BootstrapUser__Permissions__0: "ManageSecurity"
+      Authorization__BootstrapUser__Permissions__1: "ViewAnyRecipe"
+      Authorization__BootstrapUser__Permissions__2: "ModifyAnyRecipe"
+      Authorization__BootstrapUser__Permissions__3: "PublishOwnedRecipe"
+    ports:
+      - "32109:8080"
+
+networks:
+  appnet:
+    external: true

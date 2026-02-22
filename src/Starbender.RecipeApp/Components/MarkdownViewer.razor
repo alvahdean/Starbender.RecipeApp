@@ -1,0 +1,87 @@
+@* MarkdownViewer.razor *@
+@using Markdig
+@using Microsoft.AspNetCore.Hosting
+@inject HttpClient Http
+@inject NavigationManager Nav
+@inject IWebHostEnvironment HostEnv
+
+@if (_error is not null)
+{
+    <div class="@Class" style="@Style">@_error</div>
+}
+else if (_html is null)
+{
+    <div class="@Class" style="@Style">Loading…</div>
+}
+else
+{
+    <div class="@Class" style="@Style">@((MarkupString)_html)</div>
+}
+
+@code {
+    /// <summary>
+    /// Relative URL under wwwroot, e.g. "README.md" or "docs/guide.md"
+    /// </summary>
+    [Parameter] public string Source { get; set; } = string.Empty;
+
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public string? Style { get; set; }
+
+    [Parameter] public bool UseAdvancedExtensions { get; set; } = true;
+
+    private static readonly Dictionary<string, string> Cache = new();
+    private static readonly object CacheLock = new();
+
+    private string? _html;
+    private string? _error;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var key = Source.TrimStart('/');
+
+        lock (CacheLock)
+        {
+            if (Cache.TryGetValue(key, out var cached))
+            {
+                _html = cached;
+                _error = null;
+                return;
+            }
+        }
+
+        try
+        {
+            string markdown;
+
+            var localPath = Path.Combine(HostEnv.WebRootPath, key.Replace('/', Path.DirectorySeparatorChar));
+            if (File.Exists(localPath))
+            {
+                markdown = await File.ReadAllTextAsync(localPath);
+            }
+            else
+            {
+                var uri = new Uri(new Uri(Nav.BaseUri), key);
+                markdown = await Http.GetStringAsync(uri);
+            }
+
+            var pipeline = UseAdvancedExtensions
+                ? new MarkdownPipelineBuilder().UseAdvancedExtensions().Build()
+                : new MarkdownPipelineBuilder().Build();
+
+            var html = Markdown.ToHtml(markdown, pipeline);
+
+            lock (CacheLock)
+            {
+                Cache[key] = html;
+            }
+
+            _html = html;
+            _error = null;
+        }
+        catch (Exception ex)
+        {
+            _html = null;
+            _error = $"Failed to load '{Source}': {ex.Message}";
+        }
+    }
+}

@@ -1,36 +1,17 @@
 ﻿@page "/"
 
-@using Starbender.RecipeApp.Services.Contracts
-@using Starbender.RecipeApp.Services.Contracts.Dtos
-@using Starbender.RecipeApp.Blazor.Components
-
-@inject IRecipeAppService RecipeService
-@inject NavigationManager NavigationManager
-
-<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="py-2 w-100">
-
-    @if (_isLoading)
-    {
-        <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
-    }
-    else
-    {
-        <RecipeTable />
-    }
-
+<MudContainer Class="p-2 w-100">
+    <MarkdownViewer Source="README.md"/>
 </MudContainer>
 
 @code {
-
-    private bool _isLoading = true;
-
-    protected override async Task OnParametersSetAsync()
+    protected override void OnInitialized()
     {
-        _isLoading = false;
+        base.OnInitialized();
     }
 
-    private async Task HandleDialogSavedAsync(RecipeDto _)
+    protected override void OnParametersSet()
     {
-        //StateHasChanged();
+        base.OnParametersSet();
     }
 }

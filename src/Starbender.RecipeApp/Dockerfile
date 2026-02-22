@@ -5,8 +5,6 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
 USER $APP_UID
 WORKDIR /app
 EXPOSE 8080
-EXPOSE 8081
-
 
 # This stage is used to build the service project
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
@@ -34,6 +32,10 @@ RUN dotnet publish "./Starbender.RecipeApp.csproj" -c $BUILD_CONFIGURATION -o /a
 
 # This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final
+RUN mkdir -p /app/data/recipes
+RUN chown -R $APP_UID /app/data/recipes
+RUN chmod -R 750 /app/data/recipes
+
 WORKDIR /app
 COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "Starbender.RecipeApp.dll"]

@@ -1,4 +1,8 @@
 # Starbender.RecipeApp
+## Overview
+This application is a simple code sample to demonstrate my personal coding style and experience with .NET/Blazor.
+THe code repositiry is publicly available and can be found on [GitHub](https://github.com/alvahdean/Starbender.RecipeApp).
+___
 
 ## Requirements
 Create a new recipe application using Blazor (Web Assembly or Server). 
@@ -20,9 +24,11 @@ Scaffolding should not be used.
    1. Viewing an individual recipe should be done via a Razor Page.
 5. Site should use Bootstrap or some other type of front-end framework.
 6. Queries should use Entity Framework
+___
 
 # Database migration
 There is a script in src/migrate-database.cmd that will correctly run the database update. It will use the values in appsettings.json for the __Default__ connection string.
+___
 
 ## Solution Layout
 The solution is split into focused projects under `src/`:
@@ -37,6 +43,8 @@ The solution is split into focused projects under `src/`:
 - `Starbender.RecipeApp.Core`: app-specific module wiring and cross-cutting registrations.
 - `Starbender.Core`: generic abstractions and infrastructure primitives (`IRepository`, DTO/entity interfaces, module base).
 - `Starbender.BlobStorage`: blob/file storage abstractions and implementations used for recipe images.
+
+___
 
 ## Application Architecture
 The application uses a layered architecture with dependency inversion and module-based registration:
@@ -65,51 +73,4 @@ Runtime request flow is:
 `Blazor Component -> App Service -> Repository -> EF Core DbContext -> SQL Server`
 and for image operations:
 `App Service -> Blob Container abstraction -> configured blob store`.
-
-## Authorization Bootstrap User (Config / Env Vars)
-The bootstrap admin user and permission claims are configured via normal ASP.NET Core configuration under:
-
-- `Authorization:BootstrapUser`
-
-This means you can set it in `appsettings.json`, user secrets, Key Vault, or environment variables.
-
-### Environment Variable Names
-Use double-underscore (`__`) separators for nested configuration keys.
-
-Example:
-
-```powershell
-$env:Authorization__BootstrapUser__Enabled="true"
-$env:Authorization__BootstrapUser__Email="admin@example.com"
-$env:Authorization__BootstrapUser__UserName="admin@example.com"
-$env:Authorization__BootstrapUser__Password="Use-A-Real-Secret"
-$env:Authorization__BootstrapUser__AutoCreate="true"
-$env:Authorization__BootstrapUser__ConfirmEmail="true"
-$env:Authorization__BootstrapUser__ReplaceManagedPermissionClaims="false"
-$env:Authorization__BootstrapUser__Permissions__0="ManageSecurity"
-$env:Authorization__BootstrapUser__Permissions__1="ViewAnyRecipe"
-$env:Authorization__BootstrapUser__Permissions__2="ModifyAnyRecipe"
-$env:Authorization__BootstrapUser__Permissions__3="PublishOwnedRecipe"
-```
-
-Array values use numeric indexes (for example `Permissions__0`, `Permissions__1`, etc.).
-
-### Docker / Container Example
-You can pass the same values in a container environment section:
-
-```yaml
-environment:
-  Authorization__BootstrapUser__Enabled: "true"
-  Authorization__BootstrapUser__Email: "admin@example.com"
-  Authorization__BootstrapUser__UserName: "admin@example.com"
-  Authorization__BootstrapUser__Password: "Use-A-Real-Secret"
-  Authorization__BootstrapUser__AutoCreate: "true"
-  Authorization__BootstrapUser__Permissions__0: "ManageSecurity"
-  Authorization__BootstrapUser__Permissions__1: "ViewAnyRecipe"
-  Authorization__BootstrapUser__Permissions__2: "ModifyAnyRecipe"
-  Authorization__BootstrapUser__Permissions__3: "PublishOwnedRecipe"
-```
-
-Notes:
-- Default authenticated permissions (`ManageOwnedRecipe`, `UnpublishOwnedRecipe`) are implicit and do not need explicit claims.
-- Avoid storing real bootstrap passwords in source-controlled `appsettings.json`; prefer environment variables, secret stores, or platform-managed secrets.
+___

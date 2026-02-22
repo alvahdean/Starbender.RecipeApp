@@ -1,6 +1,6 @@
 ﻿using Starbender.BlobStorage.Contracts;
 
-namespace Starbender.RecipeApp.Services.Contracts.Options;
+namespace Starbender.RecipeApp.Services.Contracts;
 
 public class RecipeAppOptions
 {
