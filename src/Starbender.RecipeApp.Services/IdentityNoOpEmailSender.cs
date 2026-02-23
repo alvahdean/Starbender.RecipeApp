@@ -2,10 +2,10 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Starbender.RecipeApp.EntityFrameworkCore;
 
-namespace Starbender.RecipeApp.Components.Account
+namespace Starbender.RecipeApp.Services
 {
     // Remove the "else if (EmailSender is IdentityNoOpEmailSender)" block from RegisterConfirmation.razor after updating with a real implementation.
-    internal sealed class IdentityNoOpEmailSender : IEmailSender<ApplicationUser>
+    public sealed class IdentityNoOpEmailSender : IEmailSender<ApplicationUser>
     {
         private readonly IEmailSender emailSender = new NoOpEmailSender();
 

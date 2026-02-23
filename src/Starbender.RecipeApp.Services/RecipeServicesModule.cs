@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Starbender.Core;
 using Starbender.Core.Extensions;
@@ -24,6 +26,25 @@ public class RecipeServicesModule : ModuleBase
             .BindConfiguration(RecipeAppOptions.ConfigurationKey)
             .ValidateOnStart();
 
+        ConfigureEmailSender(services);
+
         return services;
+    }
+
+    private void ConfigureEmailSender(IServiceCollection services)
+    {
+        var configuration = services.BuildServiceProvider().GetRequiredService<IConfiguration>();
+
+        services.AddOptions<SmtpEmailSenderOptions>()
+            .BindConfiguration(SmtpEmailSenderOptions.ConfigurationSection);
+
+        if (configuration.GetValue<bool>("Email:Smtp:Enabled"))
+        {
+            services.AddSingleton<IEmailSender<ApplicationUser>, IdentitySmtpEmailSender>();
+        }
+        else
+        {
+            services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+        }
     }
 }

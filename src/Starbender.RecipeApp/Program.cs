@@ -157,8 +157,6 @@ namespace Starbender.RecipeApp
                 .AddSignInManager()
                 .AddDefaultTokenProviders();
 
-            builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
-
             // Custom module dependency loader
             builder.Services.InitializeAppModules();
 
